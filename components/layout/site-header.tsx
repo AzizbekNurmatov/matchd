@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { signOut } from "@/app/(auth)/actions";
 import { Container } from "@/components/layout/container";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
@@ -44,12 +45,19 @@ export async function SiteHeader() {
             Matches
           </Link>
           {username ? (
-            <Link
-              href={`/users/${username}`}
-              className="hover:text-foreground"
-            >
-              {username}
-            </Link>
+            <>
+              <Link
+                href={`/users/${username}`}
+                className="hover:text-foreground"
+              >
+                {username}
+              </Link>
+              <form action={signOut}>
+                <button type="submit" className="hover:text-foreground">
+                  Log out
+                </button>
+              </form>
+            </>
           ) : (
             <>
               <Link href="/login" className="hover:text-foreground">
