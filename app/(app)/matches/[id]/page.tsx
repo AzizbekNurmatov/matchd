@@ -5,6 +5,9 @@ import { cache } from "react";
 import { Container } from "@/components/layout/container";
 import { StarDisplay } from "@/components/ratings/star-display";
 import { StarPicker } from "@/components/ratings/star-picker";
+import { ReviewForm } from "@/components/reviews/review-form";
+import { ReviewList } from "@/components/reviews/review-list";
+import type { ReviewItem } from "@/components/reviews/types";
 import { createClient } from "@/lib/supabase/server";
 import {
   formatRating,
@@ -59,20 +62,28 @@ const loadMatchPage = cache(async (id: string) => {
     .eq("match_id", id)
     .maybeSingle();
 
-  const userRatingQuery = user
-    ? supabase
-        .from("match_ratings")
-        .select("rating")
-        .eq("match_id", id)
-        .eq("user_id", user.id)
-        .maybeSingle()
-    : Promise.resolve({ data: null, error: null });
+  const reviewsQuery = supabase
+    .from("reviews")
+    .select(
+      `
+      id,
+      user_id,
+      body,
+      created_at,
+      updated_at,
+      profile:profiles!reviews_user_id_fkey (username)
+    `,
+    )
+    .eq("match_id", id)
+    .order("created_at", { ascending: false });
 
-  const [matchResult, statsResult, userRatingResult] = await Promise.all([
-    matchQuery,
-    statsQuery,
-    userRatingQuery,
-  ]);
+  const ratingsQuery = supabase
+    .from("match_ratings")
+    .select("user_id, rating")
+    .eq("match_id", id);
+
+  const [matchResult, statsResult, reviewsResult, ratingsResult] =
+    await Promise.all([matchQuery, statsQuery, reviewsQuery, ratingsQuery]);
 
   if (matchResult.error || !matchResult.data) {
     return null;
@@ -91,11 +102,37 @@ const loadMatchPage = cache(async (id: string) => {
     away_team: asSingle(row.away_team),
   };
 
+  const ratingByUser = new Map(
+    (ratingsResult.data ?? []).map((rating) => [
+      rating.user_id,
+      toRatingNumber(rating.rating),
+    ]),
+  );
+
+  const reviews: ReviewItem[] = (reviewsResult.data ?? []).map((review) => {
+    const profile = asSingle(review.profile);
+
+    return {
+      id: review.id,
+      userId: review.user_id,
+      username: profile?.username ?? "user",
+      body: review.body,
+      createdAt: review.created_at,
+      updatedAt: review.updated_at,
+      rating: ratingByUser.get(review.user_id) ?? null,
+    };
+  });
+
   return {
     match,
     averageRating: toRatingNumber(statsResult.data?.average_rating),
     ratingCount: statsResult.data?.rating_count ?? 0,
-    userRating: toRatingNumber(userRatingResult.data?.rating),
+    userRating: user ? (ratingByUser.get(user.id) ?? null) : null,
+    userReview: user
+      ? (reviews.find((review) => review.userId === user.id) ?? null)
+      : null,
+    reviews,
+    currentUserId: user?.id ?? null,
     isLoggedIn: Boolean(user),
   };
 });
@@ -138,7 +175,16 @@ export default async function MatchPage({
     notFound();
   }
 
-  const { match, averageRating, ratingCount, userRating, isLoggedIn } = data;
+  const {
+    match,
+    averageRating,
+    ratingCount,
+    userRating,
+    userReview,
+    reviews,
+    currentUserId,
+    isLoggedIn,
+  } = data;
   const home = match.home_team;
   const away = match.away_team;
   const hasScore = match.home_score != null && match.away_score != null;
@@ -224,12 +270,43 @@ export default async function MatchPage({
       </section>
 
       <section className="mt-14 border-t border-border pt-10">
-        <h2 className="text-xs uppercase tracking-[0.18em] text-muted">
-          Reviews
-        </h2>
-        <p className="mt-4 text-sm text-muted">
-          Fan reviews for this match will appear here.
-        </p>
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-xs uppercase tracking-[0.18em] text-muted">
+            Reviews
+          </h2>
+          {reviews.length > 0 ? (
+            <p className="text-xs text-[#8e8e8e]">
+              {reviews.length === 1 ? "1 review" : `${reviews.length} reviews`}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-8">
+          {isLoggedIn ? (
+            <ReviewForm
+              matchId={match.id}
+              existingBody={userReview?.body ?? null}
+            />
+          ) : (
+            <p className="text-sm text-[#8e8e8e]">
+              <Link
+                href="/login"
+                className="text-[#f4f4f0] underline decoration-border hover:decoration-[#e4b42a]"
+              >
+                Log in
+              </Link>{" "}
+              to write a review.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-10">
+          <ReviewList
+            reviews={reviews}
+            matchId={match.id}
+            currentUserId={currentUserId}
+          />
+        </div>
       </section>
     </Container>
   );
