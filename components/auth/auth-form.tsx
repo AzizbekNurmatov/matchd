@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type AuthFormProps = {
@@ -13,6 +16,8 @@ export function AuthForm({
   includeUsername = false,
   error,
 }: AuthFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <form action={action} className="flex flex-col gap-4">
       {includeUsername ? (
@@ -43,14 +48,25 @@ export function AuthForm({
       </label>
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="text-muted">Password</span>
-        <input
-          name="password"
-          type="password"
-          autoComplete={includeUsername ? "new-password" : "current-password"}
-          required
-          minLength={6}
-          className={fieldClassName}
-        />
+        <span className="relative">
+          <input
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete={includeUsername ? "new-password" : "current-password"}
+            required
+            minLength={6}
+            className={cn(fieldClassName, "w-full pr-16")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            className="absolute inset-y-0 right-3 flex items-center text-xs text-muted hover:text-foreground"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </span>
       </label>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <button
