@@ -27,3 +27,10 @@ export function formatRelativeTime(iso: string, now = Date.now()): string {
     year: "numeric",
   }).format(date);
 }
+
+export function formatMonthYear(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
+}
