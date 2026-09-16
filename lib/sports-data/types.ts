@@ -1,6 +1,11 @@
+/**
+ * Provider-normalized shapes for competitions, teams, and matches.
+ * These are independent of both Football-Data.org payloads and Postgres rows.
+ */
+
 export type ExternalMatchStatus =
   | "scheduled"
-  | "live"
+  | "in_play"
   | "finished"
   | "postponed"
   | "cancelled";
@@ -30,4 +35,16 @@ export type ExternalMatch = {
   status: ExternalMatchStatus;
   homeScore: number | null;
   awayScore: number | null;
+  homeTeam: ExternalTeam;
+  awayTeam: ExternalTeam;
 };
+
+export type CompetitionMatches = {
+  competition: ExternalCompetition;
+  matches: ExternalMatch[];
+};
+
+/** Normalized aliases used by the sports-data layer. */
+export type Competition = ExternalCompetition;
+export type Team = ExternalTeam;
+export type Match = ExternalMatch;

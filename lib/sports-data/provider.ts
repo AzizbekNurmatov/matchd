@@ -1,16 +1,17 @@
-import type {
-  ExternalCompetition,
-  ExternalMatch,
-  ExternalTeam,
-} from "@/lib/sports-data/types";
+import type { CompetitionMatches } from "@/lib/sports-data/types";
 
 /**
- * Boundary for whatever soccer API we use later.
+ * Boundary for the soccer stats API.
  * UI code should never depend on this — only a server-side sync job.
  */
 export interface SportsDataProvider {
-  listCompetitions(): Promise<ExternalCompetition[]>;
-  listTeams(): Promise<ExternalTeam[]>;
-  listRecentMatches(): Promise<ExternalMatch[]>;
-  getMatch(externalId: string): Promise<ExternalMatch | null>;
+  fetchCompetitionMatches(
+    competitionCode: string,
+    season?: number,
+  ): Promise<CompetitionMatches>;
+  fetchRecentMatches(
+    competitionCode: string,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<CompetitionMatches>;
 }
