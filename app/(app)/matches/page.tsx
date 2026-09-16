@@ -10,6 +10,19 @@ export const metadata: Metadata = {
 };
 
 const PAGE_SIZE = 18;
+const RECENT_WINDOW_DAYS = 30;
+const MATCHDAY_LOOKBACK_DAYS = 3;
+
+const MATCH_SELECT = `
+  id,
+  kickoff_at,
+  status,
+  home_score,
+  away_score,
+  competition:competitions (name),
+  home_team:teams!matches_home_team_id_fkey (name, short_name, crest_url),
+  away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
+`;
 
 const TABS = [
   { id: "recent", label: "Recent Results" },
@@ -48,34 +61,7 @@ export default async function MatchesPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createClient();
-  let query = supabase.from("matches").select(
-    `
-      id,
-      kickoff_at,
-      status,
-      home_score,
-      away_score,
-      competition:competitions (name),
-      home_team:teams!matches_home_team_id_fkey (name, short_name, crest_url),
-      away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
-    `,
-    { count: "exact" },
-  );
-
-  if (tab === "recent") {
-    query = query.eq("status", "finished").order("kickoff_at", {
-      ascending: false,
-    });
-  } else if (tab === "upcoming") {
-    // Postgres enum is `live` (provider-normalized `in_play` is mapped on ingest).
-    query = query
-      .in("status", ["scheduled", "live"])
-      .order("kickoff_at", { ascending: true });
-  } else {
-    query = query.order("kickoff_at", { ascending: false });
-  }
-
-  const { data, error, count } = await query.range(from, to);
+  const { data, error, count } = await fetchCatalogPage(supabase, tab, from, to);
 
   if (error) {
     console.error("Error fetching matches:", error);
@@ -132,10 +118,7 @@ export default async function MatchesPage({
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {matches.map((match) => {
-            const date = new Date(match.kickoff_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            });
+            const date = formatCardDate(match.kickoff_at);
 
             return (
               <Link
@@ -275,8 +258,90 @@ function emptyCopy(tab: CatalogTab): string {
     case "all":
       return "No matches found.";
     default:
-      return "No recent results.";
+      return "No matches completed in the past 30 days.";
   }
+}
+
+function formatCardDate(iso: string, now = new Date()): string {
+  const date = new Date(iso);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
+  });
+}
+
+async function fetchCatalogPage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tab: CatalogTab,
+  from: number,
+  to: number,
+) {
+  if (tab === "recent") {
+    return fetchRecentPage(supabase, from, to);
+  }
+
+  let query = supabase.from("matches").select(MATCH_SELECT, { count: "exact" });
+
+  if (tab === "upcoming") {
+    // Postgres enum is `live` (provider-normalized `in_play` is mapped on ingest).
+    query = query
+      .in("status", ["scheduled", "live"])
+      .order("kickoff_at", { ascending: true });
+  } else {
+    query = query.order("kickoff_at", { ascending: false });
+  }
+
+  return query.range(from, to);
+}
+
+async function fetchRecentPage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  from: number,
+  to: number,
+) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - RECENT_WINDOW_DAYS);
+
+  const recent = await supabase
+    .from("matches")
+    .select(MATCH_SELECT, { count: "exact" })
+    .eq("status", "finished")
+    .gte("kickoff_at", thirtyDaysAgo.toISOString())
+    .order("kickoff_at", { ascending: false })
+    .range(from, to);
+
+  if (recent.error || (recent.count ?? 0) > 0) {
+    return recent;
+  }
+
+  const { data: latest, error: latestError } = await supabase
+    .from("matches")
+    .select("kickoff_at")
+    .eq("status", "finished")
+    .order("kickoff_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestError || !latest?.kickoff_at) {
+    return recent;
+  }
+
+  const latestKickoff = new Date(latest.kickoff_at);
+  const matchweekStart = new Date(latestKickoff);
+  matchweekStart.setUTCDate(
+    matchweekStart.getUTCDate() - MATCHDAY_LOOKBACK_DAYS,
+  );
+  matchweekStart.setUTCHours(0, 0, 0, 0);
+
+  return supabase
+    .from("matches")
+    .select(MATCH_SELECT, { count: "exact" })
+    .eq("status", "finished")
+    .gte("kickoff_at", matchweekStart.toISOString())
+    .lte("kickoff_at", latest.kickoff_at)
+    .order("kickoff_at", { ascending: false })
+    .range(from, to);
 }
 
 function statusLabel(status: MatchStatus): string {
