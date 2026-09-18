@@ -23,7 +23,10 @@ type FeaturedMatch = {
 };
 
 export default async function HomePage() {
-  const matches = await getFeaturedMatches();
+  const [matches, isLoggedIn] = await Promise.all([
+    getFeaturedMatches(),
+    getIsLoggedIn(),
+  ]);
 
   return (
     <div className="relative">
@@ -50,12 +53,14 @@ export default async function HomePage() {
             >
               Browse Matches
             </Link>
-            <Link
-              href="/signup"
-              className="rounded-md border border-[#262626] px-5 py-2.5 text-sm font-medium text-[#8e8e8e] transition-colors hover:border-[#383838] hover:text-[#f4f4f0]"
-            >
-              Create an account
-            </Link>
+            {isLoggedIn ? null : (
+              <Link
+                href="/signup"
+                className="rounded-md border border-[#262626] px-5 py-2.5 text-sm font-medium text-[#8e8e8e] transition-colors hover:border-[#383838] hover:text-[#f4f4f0]"
+              >
+                Create an account
+              </Link>
+            )}
           </div>
         </section>
 
@@ -175,6 +180,14 @@ function Crest({ team }: { team: TeamSummary | null }) {
 
 function teamLabel(team: TeamSummary | null) {
   return team?.short_name || team?.name || "TBD";
+}
+
+async function getIsLoggedIn() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return Boolean(user);
 }
 
 async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
