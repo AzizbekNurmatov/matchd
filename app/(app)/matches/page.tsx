@@ -128,27 +128,7 @@ export default async function MatchesPage({
           })}
         </nav>
 
-        <nav className="flex flex-wrap gap-1" aria-label="League filter">
-          {LEAGUES.map((item) => {
-            const active = item.id === league;
-            return (
-              <Link
-                key={item.id}
-                href={matchesHref(tab, item.id)}
-                scroll={false}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs transition-colors",
-                  active
-                    ? "bg-[#262626] text-[#f4f4f0]"
-                    : "text-[#8e8e8e] hover:text-[#f4f4f0]",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <LeagueDropdown tab={tab} league={league} />
       </div>
 
       {matches.length === 0 ? (
@@ -224,6 +204,63 @@ export default async function MatchesPage({
         />
       ) : null}
     </Container>
+  );
+}
+
+function LeagueDropdown({
+  tab,
+  league,
+}: {
+  tab: CatalogTab;
+  league: CatalogLeague;
+}) {
+  const current =
+    LEAGUES.find((item) => item.id === league)?.label ?? "All Leagues";
+
+  return (
+    <details className="group relative">
+      <summary
+        aria-label="League filter"
+        className="flex cursor-pointer list-none items-center gap-2 rounded-md border border-[#262626] bg-[#161616] px-3 py-1.5 text-xs text-[#f4f4f0] transition-colors hover:border-[#383838] [&::-webkit-details-marker]:hidden"
+      >
+        <span>{current}</span>
+        <svg
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+          className="h-3 w-3 text-[#8e8e8e] transition-transform group-open:rotate-180"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </summary>
+      <div className="absolute right-0 z-20 mt-2 min-w-[11.5rem] overflow-hidden rounded-md border border-[#262626] bg-[#161616] py-1 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+        {LEAGUES.map((item) => {
+          const active = item.id === league;
+          return (
+            <Link
+              key={item.id}
+              href={matchesHref(tab, item.id)}
+              scroll={false}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "block px-3 py-2 text-xs transition-colors",
+                active
+                  ? "bg-[#262626] text-[#f4f4f0]"
+                  : "text-[#8e8e8e] hover:bg-[#1c1c1c] hover:text-[#f4f4f0]",
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+    </details>
   );
 }
 
