@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:laliga": "node --conditions=react-server --import tsx --env-file=.env.local scripts/sync-league.ts"
+    "sync:laliga": "node --conditions=react-server --import tsx --env-file=.env.local scripts/sync-league.ts PD 2024",
+    "sync:pl": "node --conditions=react-server --import tsx --env-file=.env.local scripts/sync-league.ts PL 2024",
+    "sync:all": "npm run sync:laliga && npm run sync:pl"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

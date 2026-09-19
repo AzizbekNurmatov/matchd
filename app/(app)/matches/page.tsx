@@ -30,7 +30,14 @@ const TABS = [
   { id: "all", label: "All Fixtures" },
 ] as const;
 
+const LEAGUES = [
+  { id: "all", label: "All Leagues" },
+  { id: "PD", label: "La Liga" },
+  { id: "PL", label: "Premier League" },
+] as const;
+
 type CatalogTab = (typeof TABS)[number]["id"];
+type CatalogLeague = (typeof LEAGUES)[number]["id"];
 
 type TeamSummary = {
   name: string;
@@ -52,16 +59,25 @@ type CatalogMatch = {
 export default async function MatchesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; page?: string }>;
+  searchParams?: Promise<{ tab?: string; page?: string; league?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const tab = parseTab(params.tab);
+  const league = parseLeague(params.league);
   const page = parsePage(params.page);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
   const supabase = await createClient();
-  const { data, error, count } = await fetchCatalogPage(supabase, tab, from, to);
+  const competitionId = await resolveCompetitionId(supabase, league);
+  const { data, error, count } = await fetchCatalogPage(
+    supabase,
+    tab,
+    from,
+    to,
+    competitionId,
+    league,
+  );
 
   if (error) {
     console.error("Error fetching matches:", error);
@@ -91,27 +107,51 @@ export default async function MatchesPage({
         </p>
       </div>
 
-      <nav className="mt-6 flex flex-wrap gap-1" aria-label="Match filters">
-        {TABS.map((item) => {
-          const active = item.id === tab;
-          return (
-            <Link
-              key={item.id}
-              href={matchesHref(item.id)}
-              scroll={false}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-sm transition-colors",
-                active
-                  ? "bg-[#262626] text-[#f4f4f0]"
-                  : "text-[#8e8e8e] hover:text-[#f4f4f0]",
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <nav className="flex flex-wrap gap-1" aria-label="Match filters">
+          {TABS.map((item) => {
+            const active = item.id === tab;
+            return (
+              <Link
+                key={item.id}
+                href={matchesHref(item.id, league)}
+                scroll={false}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "bg-[#262626] text-[#f4f4f0]"
+                    : "text-[#8e8e8e] hover:text-[#f4f4f0]",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <nav className="flex flex-wrap gap-1" aria-label="League filter">
+          {LEAGUES.map((item) => {
+            const active = item.id === league;
+            return (
+              <Link
+                key={item.id}
+                href={matchesHref(tab, item.id)}
+                scroll={false}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs transition-colors",
+                  active
+                    ? "bg-[#262626] text-[#f4f4f0]"
+                    : "text-[#8e8e8e] hover:text-[#f4f4f0]",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
       {matches.length === 0 ? (
         <p className="mt-8 text-sm text-[#8e8e8e]">{emptyCopy(tab)}</p>
@@ -176,7 +216,12 @@ export default async function MatchesPage({
       )}
 
       {totalPages > 1 ? (
-        <Pagination tab={tab} page={page} totalPages={totalPages} />
+        <Pagination
+          tab={tab}
+          league={league}
+          page={page}
+          totalPages={totalPages}
+        />
       ) : null}
     </Container>
   );
@@ -184,15 +229,17 @@ export default async function MatchesPage({
 
 function Pagination({
   tab,
+  league,
   page,
   totalPages,
 }: {
   tab: CatalogTab;
+  league: CatalogLeague;
   page: number;
   totalPages: number;
 }) {
-  const previousHref = matchesHref(tab, page - 1);
-  const nextHref = matchesHref(tab, page + 1);
+  const previousHref = matchesHref(tab, league, page - 1);
+  const nextHref = matchesHref(tab, league, page + 1);
   const hasPrevious = page > 1;
   const hasNext = page < totalPages;
 
@@ -234,6 +281,13 @@ function parseTab(value?: string): CatalogTab {
   return "recent";
 }
 
+function parseLeague(value?: string): CatalogLeague {
+  if (value === "PD" || value === "PL") {
+    return value;
+  }
+  return "all";
+}
+
 function parsePage(value?: string): number {
   const parsed = Number.parseInt(value ?? "1", 10);
   if (!Number.isFinite(parsed) || parsed < 1) {
@@ -242,9 +296,12 @@ function parsePage(value?: string): number {
   return parsed;
 }
 
-function matchesHref(tab: CatalogTab, page = 1): string {
+function matchesHref(tab: CatalogTab, league: CatalogLeague, page = 1): string {
   const params = new URLSearchParams();
   params.set("tab", tab);
+  if (league !== "all") {
+    params.set("league", league);
+  }
   if (page > 1) {
     params.set("page", String(page));
   }
@@ -276,12 +333,19 @@ async function fetchCatalogPage(
   tab: CatalogTab,
   from: number,
   to: number,
+  competitionId: string | null,
+  league: CatalogLeague,
 ) {
+  if (league !== "all" && !competitionId) {
+    return { data: [], count: 0, error: null };
+  }
+
   if (tab === "recent") {
-    return fetchRecentPage(supabase, from, to);
+    return fetchRecentPage(supabase, from, to, competitionId);
   }
 
   let query = supabase.from("matches").select(MATCH_SELECT, { count: "exact" });
+  query = applyCompetitionFilter(query, competitionId);
 
   if (tab === "upcoming") {
     // Postgres enum is `live` (provider-normalized `in_play` is mapped on ingest).
@@ -299,27 +363,33 @@ async function fetchRecentPage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   from: number,
   to: number,
+  competitionId: string | null,
 ) {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - RECENT_WINDOW_DAYS);
 
-  const recent = await supabase
-    .from("matches")
-    .select(MATCH_SELECT, { count: "exact" })
-    .eq("status", "finished")
-    .gte("kickoff_at", thirtyDaysAgo.toISOString())
-    .order("kickoff_at", { ascending: false })
-    .range(from, to);
+  const recent = await applyCompetitionFilter(
+    supabase
+      .from("matches")
+      .select(MATCH_SELECT, { count: "exact" })
+      .eq("status", "finished")
+      .gte("kickoff_at", thirtyDaysAgo.toISOString())
+      .order("kickoff_at", { ascending: false }),
+    competitionId,
+  ).range(from, to);
 
   if (recent.error || (recent.count ?? 0) > 0) {
     return recent;
   }
 
-  const { data: latest, error: latestError } = await supabase
+  let latestQuery = supabase
     .from("matches")
     .select("kickoff_at")
     .eq("status", "finished")
-    .order("kickoff_at", { ascending: false })
+    .order("kickoff_at", { ascending: false });
+  latestQuery = applyCompetitionFilter(latestQuery, competitionId);
+
+  const { data: latest, error: latestError } = await latestQuery
     .limit(1)
     .maybeSingle();
 
@@ -334,14 +404,48 @@ async function fetchRecentPage(
   );
   matchweekStart.setUTCHours(0, 0, 0, 0);
 
-  return supabase
-    .from("matches")
-    .select(MATCH_SELECT, { count: "exact" })
-    .eq("status", "finished")
-    .gte("kickoff_at", matchweekStart.toISOString())
-    .lte("kickoff_at", latest.kickoff_at)
-    .order("kickoff_at", { ascending: false })
-    .range(from, to);
+  return applyCompetitionFilter(
+    supabase
+      .from("matches")
+      .select(MATCH_SELECT, { count: "exact" })
+      .eq("status", "finished")
+      .gte("kickoff_at", matchweekStart.toISOString())
+      .lte("kickoff_at", latest.kickoff_at)
+      .order("kickoff_at", { ascending: false }),
+    competitionId,
+  ).range(from, to);
+}
+
+async function resolveCompetitionId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  league: CatalogLeague,
+) {
+  if (league === "all") {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("competitions")
+    .select("id")
+    .eq("short_name", league)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error resolving competition:", error);
+    return null;
+  }
+
+  return data?.id ?? null;
+}
+
+function applyCompetitionFilter<T extends { eq: (column: string, value: string) => T }>(
+  query: T,
+  competitionId: string | null,
+): T {
+  if (!competitionId) {
+    return query;
+  }
+  return query.eq("competition_id", competitionId);
 }
 
 function statusLabel(status: MatchStatus): string {

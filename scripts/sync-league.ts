@@ -6,7 +6,9 @@ import { resolve } from "node:path";
  *
  * Usage:
  *   npm run sync:laliga
- *   npx tsx --env-file=.env.local scripts/sync-league.ts PD 2024
+ *   npm run sync:pl
+ *   npm run sync:all
+ *   npx tsx --env-file=.env.local scripts/sync-league.ts PL 2024
  */
 
 function loadEnvLocal() {
@@ -40,11 +42,10 @@ function loadEnvLocal() {
 async function main() {
   loadEnvLocal();
 
-  const competitionCode = process.argv[2] ?? "PD";
-  const seasonArg = process.argv[3];
-  const season = seasonArg ? Number(seasonArg) : 2024;
+  const competitionCode = process.argv[2] || "PL";
+  const season = process.argv[3] ? parseInt(process.argv[3], 10) : 2024;
   if (Number.isNaN(season)) {
-    throw new Error(`Invalid season: ${seasonArg}`);
+    throw new Error(`Invalid season: ${process.argv[3]}`);
   }
 
   const { syncCompetitionMatches } = await import("@/lib/sports-data/sync");
