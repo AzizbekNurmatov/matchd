@@ -10,8 +10,6 @@ export const metadata: Metadata = {
 };
 
 const PAGE_SIZE = 18;
-const RECENT_WINDOW_DAYS = 30;
-const MATCHDAY_LOOKBACK_DAYS = 3;
 
 const MATCH_SELECT = `
   id,
@@ -61,10 +59,10 @@ export default async function MatchesPage({
 }: {
   searchParams?: Promise<{ tab?: string; page?: string; league?: string }>;
 }) {
-  const params = (await searchParams) ?? {};
-  const tab = parseTab(params.tab);
-  const league = parseLeague(params.league);
-  const page = parsePage(params.page);
+  const params = await searchParams;
+  const tab = parseTab(params?.tab || "recent");
+  const league = parseLeague(params?.league || "all");
+  const page = parsePage(params?.page);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -154,7 +152,9 @@ export default async function MatchesPage({
       </div>
 
       {matches.length === 0 ? (
-        <p className="mt-8 text-sm text-[#8e8e8e]">{emptyCopy(tab)}</p>
+        <div className="mt-8 rounded-lg border border-[#262626] bg-[#161616] px-5 py-10">
+          <p className="text-sm text-[#8e8e8e]">{emptyCopy(tab)}</p>
+        </div>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {matches.map((match) => {
@@ -311,20 +311,19 @@ function matchesHref(tab: CatalogTab, league: CatalogLeague, page = 1): string {
 function emptyCopy(tab: CatalogTab): string {
   switch (tab) {
     case "upcoming":
-      return "No upcoming fixtures.";
+      return "No upcoming fixtures scheduled for this league.";
     case "all":
       return "No matches found.";
     default:
-      return "No matches completed in the past 30 days.";
+      return "No completed matches found.";
   }
 }
 
-function formatCardDate(iso: string, now = new Date()): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString("en-US", {
+function formatCardDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
+    year: "numeric",
   });
 }
 
@@ -340,15 +339,15 @@ async function fetchCatalogPage(
     return { data: [], count: 0, error: null };
   }
 
-  if (tab === "recent") {
-    return fetchRecentPage(supabase, from, to, competitionId);
-  }
-
   let query = supabase.from("matches").select(MATCH_SELECT, { count: "exact" });
   query = applyCompetitionFilter(query, competitionId);
 
-  if (tab === "upcoming") {
-    // Postgres enum is `live` (provider-normalized `in_play` is mapped on ingest).
+  if (tab === "recent") {
+    query = query.eq("status", "finished").order("kickoff_at", {
+      ascending: false,
+    });
+  } else if (tab === "upcoming") {
+    // Football-Data TIMED/SCHEDULED map to `scheduled`; IN_PLAY maps to `live`.
     query = query
       .in("status", ["scheduled", "live"])
       .order("kickoff_at", { ascending: true });
@@ -357,63 +356,6 @@ async function fetchCatalogPage(
   }
 
   return query.range(from, to);
-}
-
-async function fetchRecentPage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  from: number,
-  to: number,
-  competitionId: string | null,
-) {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - RECENT_WINDOW_DAYS);
-
-  const recent = await applyCompetitionFilter(
-    supabase
-      .from("matches")
-      .select(MATCH_SELECT, { count: "exact" })
-      .eq("status", "finished")
-      .gte("kickoff_at", thirtyDaysAgo.toISOString())
-      .order("kickoff_at", { ascending: false }),
-    competitionId,
-  ).range(from, to);
-
-  if (recent.error || (recent.count ?? 0) > 0) {
-    return recent;
-  }
-
-  let latestQuery = supabase
-    .from("matches")
-    .select("kickoff_at")
-    .eq("status", "finished")
-    .order("kickoff_at", { ascending: false });
-  latestQuery = applyCompetitionFilter(latestQuery, competitionId);
-
-  const { data: latest, error: latestError } = await latestQuery
-    .limit(1)
-    .maybeSingle();
-
-  if (latestError || !latest?.kickoff_at) {
-    return recent;
-  }
-
-  const latestKickoff = new Date(latest.kickoff_at);
-  const matchweekStart = new Date(latestKickoff);
-  matchweekStart.setUTCDate(
-    matchweekStart.getUTCDate() - MATCHDAY_LOOKBACK_DAYS,
-  );
-  matchweekStart.setUTCHours(0, 0, 0, 0);
-
-  return applyCompetitionFilter(
-    supabase
-      .from("matches")
-      .select(MATCH_SELECT, { count: "exact" })
-      .eq("status", "finished")
-      .gte("kickoff_at", matchweekStart.toISOString())
-      .lte("kickoff_at", latest.kickoff_at)
-      .order("kickoff_at", { ascending: false }),
-    competitionId,
-  ).range(from, to);
 }
 
 async function resolveCompetitionId(

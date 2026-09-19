@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:laliga": "node --conditions=react-server --import tsx --env-file=.env.local scripts/sync-league.ts PD 2024",
-    "sync:pl": "node --conditions=react-server --import tsx --env-file=.env.local scripts/sync-league.ts PL 2024",
-    "sync:all": "npm run sync:laliga && npm run sync:pl"
+    "sync:laliga": "tsx scripts/sync-league.ts PD",
+    "sync:pl": "tsx scripts/sync-league.ts PL",
+    "sync:all": "tsx scripts/sync-league.ts PD && tsx scripts/sync-league.ts PL"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -24,6 +24,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",

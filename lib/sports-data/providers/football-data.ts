@@ -177,9 +177,14 @@ async function fetchCompetitionMatches(
   competitionCode: string,
   season?: number,
 ): Promise<CompetitionMatches> {
+  const params: Record<string, string | number | undefined> = {};
+  if (season != null && Number.isFinite(season)) {
+    params.season = season;
+  }
+
   const payload = await footballDataGet(
     `/competitions/${encodeURIComponent(competitionCode)}/matches`,
-    { season },
+    params,
   );
   return toCompetitionMatches(payload);
 }
