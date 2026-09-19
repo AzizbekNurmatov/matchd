@@ -177,6 +177,7 @@ async function fetchCompetitionMatches(
   competitionCode: string,
   season?: number,
 ): Promise<CompetitionMatches> {
+  // Omit ?season= when unset so Football-Data.org uses the active calendar season.
   const params: Record<string, string | number | undefined> = {};
   if (season != null && Number.isFinite(season)) {
     params.season = season;
@@ -196,7 +197,10 @@ async function fetchRecentMatches(
 ): Promise<CompetitionMatches> {
   const payload = await footballDataGet(
     `/competitions/${encodeURIComponent(competitionCode)}/matches`,
-    { dateFrom, dateTo },
+    {
+      dateFrom: dateFrom.trim(),
+      dateTo: dateTo.trim(),
+    },
   );
   return toCompetitionMatches(payload);
 }

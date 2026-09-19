@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
+import {
+  SUPPORTED_LEAGUES,
+  isSupportedLeagueCode,
+  type SupportedLeagueCode,
+} from "@/lib/sports-data/constants";
 import { createClient } from "@/lib/supabase/server";
 import { formatRating, toRatingNumber } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
@@ -18,7 +23,7 @@ const MATCH_SELECT = `
   status,
   home_score,
   away_score,
-  competition:competitions (name),
+  competition:competitions!inner (id, name, short_name),
   home_team:teams!matches_home_team_id_fkey (name, short_name, crest_url),
   away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
 `;
@@ -30,13 +35,15 @@ const TABS = [
 ] as const;
 
 const LEAGUES = [
-  { id: "all", label: "All Leagues" },
-  { id: "PD", label: "La Liga" },
-  { id: "PL", label: "Premier League" },
-] as const;
+  { id: "all" as const, label: "All Leagues" },
+  ...SUPPORTED_LEAGUES.map((league) => ({
+    id: league.code,
+    label: league.name,
+  })),
+];
 
 type CatalogTab = (typeof TABS)[number]["id"];
-type CatalogLeague = (typeof LEAGUES)[number]["id"];
+type CatalogLeague = "all" | SupportedLeagueCode;
 
 type TeamSummary = {
   name: string;
@@ -50,7 +57,7 @@ type CatalogMatch = {
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
-  competition: { name: string } | null;
+  competition: { id: string; name: string; short_name: string | null } | null;
   home_team: TeamSummary | null;
   away_team: TeamSummary | null;
   averageRating: number | null;
@@ -64,19 +71,17 @@ export default async function MatchesPage({
   const params = await searchParams;
   const tab = parseTab(params?.tab || "recent");
   const league = parseLeague(params?.league || "all");
-  const page = parsePage(params?.page);
+  const page = parsePage(params?.page || "1");
   const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const to = page * PAGE_SIZE - 1;
 
   const supabase = await createClient();
-  const competitionId = await resolveCompetitionId(supabase, league);
   const { data, error, count } = await fetchCatalogPage(
     supabase,
     tab,
+    league,
     from,
     to,
-    competitionId,
-    league,
   );
 
   if (error) {
@@ -131,10 +136,10 @@ export default async function MatchesPage({
                   scroll={false}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "-mb-px pb-2 font-mono text-xs uppercase tracking-widest transition-colors",
+                    "pb-2 font-mono text-xs uppercase tracking-wider",
                     active
-                      ? "border-b-2 border-[#d4973b] font-bold text-[#f3efe6]"
-                      : "border-b-2 border-transparent text-[#8c887b] hover:text-[#f3efe6]",
+                      ? "border-b-2 border-[#d4973b] text-[#f3efe6]"
+                      : "text-[#8c887b] hover:text-[#f3efe6]",
                   )}
                 >
                   {item.label}
@@ -149,7 +154,7 @@ export default async function MatchesPage({
         {matches.length === 0 ? (
           <div className="mt-8 border border-[#242426] bg-[#151516] px-5 py-12">
             <p className="font-mono text-xs uppercase tracking-widest text-[#8c887b]">
-              {emptyCopy(tab)}
+              {emptyCopy(tab, league)}
             </p>
           </div>
         ) : (
@@ -174,20 +179,20 @@ export default async function MatchesPage({
 }
 
 function MatchTicket({ match }: { match: CatalogMatch }) {
-  const finished = match.status === "finished";
-  const homeScore = finished ? (match.home_score ?? "-") : "-";
-  const awayScore = finished ? (match.away_score ?? "-") : "-";
+  const scheduled = match.status === "scheduled";
+  const homeScore = scheduled ? "-" : (match.home_score ?? "-");
+  const awayScore = scheduled ? "-" : (match.away_score ?? "-");
 
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group relative border border-[#242426] bg-[#151516] p-4 transition-all hover:border-[#3d3b38]"
+      className="flex flex-col justify-between rounded-none border border-[#242426] bg-[#151516] p-4 transition-all hover:border-[#3d3b38]"
     >
-      <div className="flex items-center justify-between border-b border-[#242426] pb-2.5">
+      <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
           {match.competition?.name ?? "Match"}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+        <span className="font-mono text-[10px] text-[#8c887b]">
           {formatCardDate(match.kickoff_at)}
         </span>
       </div>
@@ -197,14 +202,16 @@ function MatchTicket({ match }: { match: CatalogMatch }) {
         <TeamScoreRow team={match.away_team} score={awayScore} />
       </div>
 
-      <div className="flex items-center justify-between border-t border-[#242426] pt-2.5">
+      <div className="mt-3 flex items-center justify-between border-t border-[#242426] pt-3">
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
           <span>{footerStatus(match)}</span>
-          {finished && match.averageRating != null ? (
-            <span className="text-[#d4973b]">★ {formatRating(match.averageRating)}</span>
+          {match.status === "finished" && match.averageRating != null ? (
+            <span className="text-[#d4973b]">
+              ★ {formatRating(match.averageRating)}
+            </span>
           ) : null}
         </div>
-        <span className="font-mono text-xs uppercase tracking-wider text-[#d4973b] transition-colors group-hover:text-[#f3efe6]">
+        <span className="font-mono text-xs uppercase text-[#d4973b] hover:text-[#f3efe6]">
           Rate & Log →
         </span>
       </div>
@@ -233,11 +240,11 @@ function TeamScoreRow({
             {(team?.name ?? "?").slice(0, 1)}
           </span>
         )}
-        <span className="truncate text-sm font-semibold text-[#f3efe6]">
+        <span className="truncate text-sm font-medium text-[#f3efe6]">
           {team?.name ?? "TBD"}
         </span>
       </div>
-      <span className="shrink-0 font-[family-name:var(--font-bebas)] text-2xl leading-none text-[#f3efe6]">
+      <span className="shrink-0 font-mono text-xl font-bold text-[#f3efe6]">
         {score}
       </span>
     </div>
@@ -258,7 +265,7 @@ function LeagueDropdown({
     <details className="group relative shrink-0">
       <summary
         aria-label="League filter"
-        className="flex cursor-pointer list-none items-center gap-2 border border-[#2e2d2b] bg-[#1a1918] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[#f3efe6] [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-2 border border-[#2e2d2b] bg-[#1a1918] px-3 py-1.5 font-mono text-xs uppercase text-[#f3efe6] [&::-webkit-details-marker]:hidden"
       >
         <span>{current}</span>
         <svg
@@ -271,12 +278,11 @@ function LeagueDropdown({
             d="M4 6l4 4 4-4"
             stroke="currentColor"
             strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeLinecap="square"
           />
         </svg>
       </summary>
-      <div className="absolute right-0 z-20 mt-1 min-w-[11.5rem] border border-[#2e2d2b] bg-[#1a1918] py-1">
+      <div className="absolute right-0 z-20 mt-1 min-w-[13rem] border border-[#2e2d2b] bg-[#1a1918] py-1">
         {LEAGUES.map((item) => {
           const active = item.id === league;
           return (
@@ -353,8 +359,9 @@ function parseTab(value?: string): CatalogTab {
 }
 
 function parseLeague(value?: string): CatalogLeague {
-  if (value === "PD" || value === "PL") {
-    return value;
+  const code = value?.toUpperCase() ?? "";
+  if (isSupportedLeagueCode(code)) {
+    return code;
   }
   return "all";
 }
@@ -379,23 +386,31 @@ function matchesHref(tab: CatalogTab, league: CatalogLeague, page = 1): string {
   return `/matches?${params.toString()}`;
 }
 
-function emptyCopy(tab: CatalogTab): string {
+function emptyCopy(tab: CatalogTab, league: CatalogLeague): string {
+  const leagueLabel =
+    league === "all"
+      ? "this archive"
+      : (SUPPORTED_LEAGUES.find((item) => item.code === league)?.name ??
+        league);
+
   switch (tab) {
     case "upcoming":
-      return "No upcoming fixtures scheduled for this league.";
+      return `No upcoming fixtures scheduled for ${leagueLabel}.`;
     case "all":
-      return "No matches found.";
+      return `No matches found for ${leagueLabel}.`;
     default:
-      return "No completed matches found.";
+      return `No completed matches found for ${leagueLabel}.`;
   }
 }
 
 function formatCardDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return new Date(iso)
+    .toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
+    .toUpperCase();
 }
 
 function formatKickoffTime(iso: string): string {
@@ -426,18 +441,19 @@ function footerStatus(match: CatalogMatch): string {
 async function fetchCatalogPage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   tab: CatalogTab,
+  league: CatalogLeague,
   from: number,
   to: number,
-  competitionId: string | null,
-  league: CatalogLeague,
 ) {
-  if (league !== "all" && !competitionId) {
-    return { data: [], count: 0, error: null };
+  let query = supabase.from("matches").select(MATCH_SELECT, { count: "exact" });
+
+  if (league !== "all") {
+    query = query.eq("competition.short_name", league);
   }
 
-  let query = supabase.from("matches").select(MATCH_SELECT, { count: "exact" });
-  query = applyCompetitionFilter(query, competitionId);
-
+  // Recent = finished, newest first. No rolling date cutoff, so older
+  // results stay in the archive. Upcoming uses our DB statuses: Football-Data
+  // TIMED/SCHEDULED map to `scheduled`, IN_PLAY maps to `live`.
   if (tab === "recent") {
     query = query.eq("status", "finished").order("kickoff_at", {
       ascending: false,
@@ -482,37 +498,6 @@ async function loadRatings(
   }
 
   return ratings;
-}
-
-async function resolveCompetitionId(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  league: CatalogLeague,
-) {
-  if (league === "all") {
-    return null;
-  }
-
-  const { data, error } = await supabase
-    .from("competitions")
-    .select("id")
-    .eq("short_name", league)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error resolving competition:", error);
-    return null;
-  }
-
-  return data?.id ?? null;
-}
-
-function applyCompetitionFilter<
-  T extends { eq: (column: string, value: string) => T },
->(query: T, competitionId: string | null): T {
-  if (!competitionId) {
-    return query;
-  }
-  return query.eq("competition_id", competitionId);
 }
 
 function asSingle<T>(value: T | T[] | null): T | null {

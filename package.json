@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:laliga": "tsx scripts/sync-league.ts PD",
     "sync:pl": "tsx scripts/sync-league.ts PL",
-    "sync:all": "tsx scripts/sync-league.ts PD && tsx scripts/sync-league.ts PL"
+    "sync:laliga": "tsx scripts/sync-league.ts PD",
+    "sync:cl": "tsx scripts/sync-league.ts CL",
+    "sync:all": "tsx scripts/sync-league.ts ALL"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

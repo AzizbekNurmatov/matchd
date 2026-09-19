@@ -1,5 +1,3 @@
-import "server-only";
-
 import { footballDataProvider } from "@/lib/sports-data/providers/football-data";
 import type { SportsDataProvider } from "@/lib/sports-data/provider";
 

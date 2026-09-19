@@ -1,3 +1,4 @@
+import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
 import { footballDataProvider } from "@/lib/sports-data/providers/football-data";
 import type {
   CompetitionMatches,
@@ -8,6 +9,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { MatchStatus } from "@/types/database";
 
 const MATCH_UPSERT_CHUNK = 100;
+const MS_PER_DAY = 86_400_000;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export type SyncResult = {
   competitionCode: string;
@@ -172,4 +176,39 @@ export async function syncRecentMatches(
     dateTo,
   );
   return upsertCompetitionMatches(competitionCode, payload);
+}
+
+export async function syncAllLeagues(season?: number): Promise<SyncResult[]> {
+  const results: SyncResult[] = [];
+
+  for (const [index, league] of SUPPORTED_LEAGUES.entries()) {
+    results.push(await syncCompetitionMatches(league.code, season));
+    if (index < SUPPORTED_LEAGUES.length - 1) {
+      await wait(2000);
+    }
+  }
+
+  return results;
+}
+
+export async function syncRecentMatchesAllLeagues(): Promise<{
+  dateFrom: string;
+  dateTo: string;
+  competitions: SyncResult[];
+}> {
+  const now = Date.now();
+  const dateFrom = new Date(now - 2 * MS_PER_DAY).toISOString().slice(0, 10);
+  const dateTo = new Date(now + 2 * MS_PER_DAY).toISOString().slice(0, 10);
+  const competitions: SyncResult[] = [];
+
+  for (const [index, league] of SUPPORTED_LEAGUES.entries()) {
+    competitions.push(
+      await syncRecentMatches(league.code, dateFrom, dateTo),
+    );
+    if (index < SUPPORTED_LEAGUES.length - 1) {
+      await wait(1500);
+    }
+  }
+
+  return { dateFrom, dateTo, competitions };
 }
