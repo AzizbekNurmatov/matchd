@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { Bebas_Neue, Instrument_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
 const sans = Instrument_Sans({
@@ -14,6 +14,12 @@ const serif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+const bebas = Bebas_Neue({
+  variable: "--font-bebas",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 export const metadata: Metadata = {
   title: {
     default: "matchd",
@@ -26,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${serif.variable} h-full antialiased`}
+      className={`${sans.variable} ${serif.variable} ${bebas.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { createClient } from "@/lib/supabase/server";
+import { formatRating, toRatingNumber } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
 import type { MatchStatus } from "@/types/database";
 
@@ -52,6 +53,7 @@ type CatalogMatch = {
   competition: { name: string } | null;
   home_team: TeamSummary | null;
   away_team: TeamSummary | null;
+  averageRating: number | null;
 };
 
 export default async function MatchesPage({
@@ -81,6 +83,11 @@ export default async function MatchesPage({
     console.error("Error fetching matches:", error);
   }
 
+  const ratingByMatch = await loadRatings(
+    supabase,
+    (data ?? []).map((row) => row.id),
+  );
+
   const matches: CatalogMatch[] = (data ?? []).map((row) => ({
     id: row.id,
     kickoff_at: row.kickoff_at,
@@ -90,120 +97,150 @@ export default async function MatchesPage({
     competition: asSingle(row.competition),
     home_team: asSingle(row.home_team),
     away_team: asSingle(row.away_team),
+    averageRating: ratingByMatch.get(row.id) ?? null,
   }));
 
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
   return (
-    <Container className="py-12">
-      <div className="flex flex-col gap-1 border-b border-border pb-6">
-        <h1 className="font-serif text-3xl tracking-tight text-[#f4f4f0]">
-          Matches
-        </h1>
-        <p className="text-sm text-[#8e8e8e]">
-          Recent fixtures, community ratings, and fan reviews.
-        </p>
+    <div className="bg-[#0f0f10]">
+      <Container className="py-12 sm:py-14">
+        <header className="border-b border-[#242426] pb-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#8c887b]">
+            Fixtures & Results // Archive
+          </p>
+          <h1 className="mt-3 font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-[#f3efe6] sm:text-5xl">
+            MATCHES
+          </h1>
+          <p className="mt-2 text-sm text-[#8c887b]">
+            Recent fixtures, community ratings, and fan reviews.
+          </p>
+        </header>
+
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <nav
+            className="flex gap-6 border-b border-[#242426]"
+            aria-label="Match filters"
+          >
+            {TABS.map((item) => {
+              const active = item.id === tab;
+              return (
+                <Link
+                  key={item.id}
+                  href={matchesHref(item.id, league)}
+                  scroll={false}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "-mb-px pb-2 font-mono text-xs uppercase tracking-widest transition-colors",
+                    active
+                      ? "border-b-2 border-[#d4973b] font-bold text-[#f3efe6]"
+                      : "border-b-2 border-transparent text-[#8c887b] hover:text-[#f3efe6]",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <LeagueDropdown tab={tab} league={league} />
+        </div>
+
+        {matches.length === 0 ? (
+          <div className="mt-8 border border-[#242426] bg-[#151516] px-5 py-12">
+            <p className="font-mono text-xs uppercase tracking-widest text-[#8c887b]">
+              {emptyCopy(tab)}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {matches.map((match) => (
+              <MatchTicket key={match.id} match={match} />
+            ))}
+          </div>
+        )}
+
+        {totalPages > 1 ? (
+          <Pagination
+            tab={tab}
+            league={league}
+            page={page}
+            totalPages={totalPages}
+          />
+        ) : null}
+      </Container>
+    </div>
+  );
+}
+
+function MatchTicket({ match }: { match: CatalogMatch }) {
+  const finished = match.status === "finished";
+  const homeScore = finished ? (match.home_score ?? "-") : "-";
+  const awayScore = finished ? (match.away_score ?? "-") : "-";
+
+  return (
+    <Link
+      href={`/matches/${match.id}`}
+      className="group relative border border-[#242426] bg-[#151516] p-4 transition-all hover:border-[#3d3b38]"
+    >
+      <div className="flex items-center justify-between border-b border-[#242426] pb-2.5">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+          {match.competition?.name ?? "Match"}
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+          {formatCardDate(match.kickoff_at)}
+        </span>
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <nav className="flex flex-wrap gap-1" aria-label="Match filters">
-          {TABS.map((item) => {
-            const active = item.id === tab;
-            return (
-              <Link
-                key={item.id}
-                href={matchesHref(item.id, league)}
-                scroll={false}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-sm transition-colors",
-                  active
-                    ? "bg-[#262626] text-[#f4f4f0]"
-                    : "text-[#8e8e8e] hover:text-[#f4f4f0]",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <LeagueDropdown tab={tab} league={league} />
+      <div className="flex flex-col gap-3 py-4">
+        <TeamScoreRow team={match.home_team} score={homeScore} />
+        <TeamScoreRow team={match.away_team} score={awayScore} />
       </div>
 
-      {matches.length === 0 ? (
-        <div className="mt-8 rounded-lg border border-[#262626] bg-[#161616] px-5 py-10">
-          <p className="text-sm text-[#8e8e8e]">{emptyCopy(tab)}</p>
+      <div className="flex items-center justify-between border-t border-[#242426] pt-2.5">
+        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+          <span>{footerStatus(match)}</span>
+          {finished && match.averageRating != null ? (
+            <span className="text-[#d4973b]">★ {formatRating(match.averageRating)}</span>
+          ) : null}
         </div>
-      ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {matches.map((match) => {
-            const date = formatCardDate(match.kickoff_at);
+        <span className="font-mono text-xs uppercase tracking-wider text-[#d4973b] transition-colors group-hover:text-[#f3efe6]">
+          Rate & Log →
+        </span>
+      </div>
+    </Link>
+  );
+}
 
-            return (
-              <Link
-                key={match.id}
-                href={`/matches/${match.id}`}
-                className="group relative flex flex-col justify-between rounded-lg border border-[#262626] bg-[#161616] p-5 transition-colors hover:border-[#383838] hover:bg-[#1c1c1c]"
-              >
-                <div className="flex items-center justify-between text-xs text-[#8e8e8e]">
-                  <span>{match.competition?.name}</span>
-                  <span>{date}</span>
-                </div>
-
-                <div className="my-5 flex items-center justify-between">
-                  <div className="flex flex-1 items-center gap-3">
-                    {match.home_team?.crest_url ? (
-                      <img
-                        src={match.home_team.crest_url}
-                        alt=""
-                        className="h-8 w-8 object-contain"
-                      />
-                    ) : null}
-                    <span className="text-sm font-medium text-[#f4f4f0]">
-                      {match.home_team?.name}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center px-4 font-mono text-base font-semibold text-[#f4f4f0]">
-                    {match.home_score ?? "-"} : {match.away_score ?? "-"}
-                  </div>
-
-                  <div className="flex flex-1 items-center justify-end gap-3 text-right">
-                    <span className="text-sm font-medium text-[#f4f4f0]">
-                      {match.away_team?.name}
-                    </span>
-                    {match.away_team?.crest_url ? (
-                      <img
-                        src={match.away_team.crest_url}
-                        alt=""
-                        className="h-8 w-8 object-contain"
-                      />
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-[#222] pt-3 text-xs text-[#8e8e8e]">
-                  <span>{statusLabel(match.status)}</span>
-                  <span className="font-medium text-amber-400 group-hover:underline">
-                    View match →
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-
-      {totalPages > 1 ? (
-        <Pagination
-          tab={tab}
-          league={league}
-          page={page}
-          totalPages={totalPages}
-        />
-      ) : null}
-    </Container>
+function TeamScoreRow({
+  team,
+  score,
+}: {
+  team: TeamSummary | null;
+  score: number | string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
+        {team?.crest_url ? (
+          <img
+            src={team.crest_url}
+            alt=""
+            className="h-5 w-5 shrink-0 object-contain"
+          />
+        ) : (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-[#0f0f10] font-mono text-[9px] text-[#8c887b]">
+            {(team?.name ?? "?").slice(0, 1)}
+          </span>
+        )}
+        <span className="truncate text-sm font-semibold text-[#f3efe6]">
+          {team?.name ?? "TBD"}
+        </span>
+      </div>
+      <span className="shrink-0 font-[family-name:var(--font-bebas)] text-2xl leading-none text-[#f3efe6]">
+        {score}
+      </span>
+    </div>
   );
 }
 
@@ -218,17 +255,17 @@ function LeagueDropdown({
     LEAGUES.find((item) => item.id === league)?.label ?? "All Leagues";
 
   return (
-    <details className="group relative">
+    <details className="group relative shrink-0">
       <summary
         aria-label="League filter"
-        className="flex cursor-pointer list-none items-center gap-2 rounded-md border border-[#262626] bg-[#161616] px-3 py-1.5 text-xs text-[#f4f4f0] transition-colors hover:border-[#383838] [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-2 border border-[#2e2d2b] bg-[#1a1918] px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[#f3efe6] [&::-webkit-details-marker]:hidden"
       >
         <span>{current}</span>
         <svg
           viewBox="0 0 16 16"
           fill="none"
           aria-hidden="true"
-          className="h-3 w-3 text-[#8e8e8e] transition-transform group-open:rotate-180"
+          className="h-3 w-3 text-[#8c887b] transition-transform group-open:rotate-180"
         >
           <path
             d="M4 6l4 4 4-4"
@@ -239,7 +276,7 @@ function LeagueDropdown({
           />
         </svg>
       </summary>
-      <div className="absolute right-0 z-20 mt-2 min-w-[11.5rem] overflow-hidden rounded-md border border-[#262626] bg-[#161616] py-1 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+      <div className="absolute right-0 z-20 mt-1 min-w-[11.5rem] border border-[#2e2d2b] bg-[#1a1918] py-1">
         {LEAGUES.map((item) => {
           const active = item.id === league;
           return (
@@ -249,10 +286,10 @@ function LeagueDropdown({
               scroll={false}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "block px-3 py-2 text-xs transition-colors",
+                "block px-3 py-2 font-mono text-xs uppercase tracking-wider transition-colors",
                 active
-                  ? "bg-[#262626] text-[#f4f4f0]"
-                  : "text-[#8e8e8e] hover:bg-[#1c1c1c] hover:text-[#f4f4f0]",
+                  ? "bg-[#151516] text-[#f3efe6]"
+                  : "text-[#8c887b] hover:bg-[#151516] hover:text-[#f3efe6]",
               )}
             >
               {item.label}
@@ -282,30 +319,27 @@ function Pagination({
 
   return (
     <nav
-      className="mt-10 flex items-center justify-between border-t border-[#262626] pt-6 text-sm"
+      className="mt-10 flex items-center justify-between border-t border-[#242426] pt-6 font-mono text-xs uppercase tracking-widest"
       aria-label="Pagination"
     >
       {hasPrevious ? (
-        <Link
-          href={previousHref}
-          className="text-[#f4f4f0] hover:text-amber-400"
-        >
+        <Link href={previousHref} className="text-[#f3efe6] hover:text-[#d4973b]">
           Previous
         </Link>
       ) : (
-        <span className="text-[#8e8e8e]">Previous</span>
+        <span className="text-[#8c887b]">Previous</span>
       )}
 
-      <p className="text-[#8e8e8e]">
+      <p className="text-[#8c887b]">
         Page {page} of {totalPages}
       </p>
 
       {hasNext ? (
-        <Link href={nextHref} className="text-[#f4f4f0] hover:text-amber-400">
+        <Link href={nextHref} className="text-[#f3efe6] hover:text-[#d4973b]">
           Next
         </Link>
       ) : (
-        <span className="text-[#8e8e8e]">Next</span>
+        <span className="text-[#8c887b]">Next</span>
       )}
     </nav>
   );
@@ -364,6 +398,31 @@ function formatCardDate(iso: string): string {
   });
 }
 
+function formatKickoffTime(iso: string): string {
+  const time = new Date(iso).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  });
+  return `${time} UTC`;
+}
+
+function footerStatus(match: CatalogMatch): string {
+  switch (match.status) {
+    case "finished":
+      return "FT";
+    case "live":
+      return "Live";
+    case "scheduled":
+      return formatKickoffTime(match.kickoff_at);
+    case "postponed":
+      return "Postponed";
+    case "cancelled":
+      return "Cancelled";
+  }
+}
+
 async function fetchCatalogPage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   tab: CatalogTab,
@@ -384,7 +443,6 @@ async function fetchCatalogPage(
       ascending: false,
     });
   } else if (tab === "upcoming") {
-    // Football-Data TIMED/SCHEDULED map to `scheduled`; IN_PLAY maps to `live`.
     query = query
       .in("status", ["scheduled", "live"])
       .order("kickoff_at", { ascending: true });
@@ -393,6 +451,37 @@ async function fetchCatalogPage(
   }
 
   return query.range(from, to);
+}
+
+async function loadRatings(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  matchIds: string[],
+) {
+  const ratings = new Map<string, number>();
+  if (matchIds.length === 0) {
+    return ratings;
+  }
+
+  const { data, error } = await supabase
+    .from("match_rating_stats")
+    .select("match_id, average_rating")
+    .in("match_id", matchIds);
+
+  if (error || !data) {
+    return ratings;
+  }
+
+  for (const row of data) {
+    if (!row.match_id) {
+      continue;
+    }
+    const value = toRatingNumber(row.average_rating);
+    if (value != null) {
+      ratings.set(row.match_id, value);
+    }
+  }
+
+  return ratings;
 }
 
 async function resolveCompetitionId(
@@ -417,29 +506,13 @@ async function resolveCompetitionId(
   return data?.id ?? null;
 }
 
-function applyCompetitionFilter<T extends { eq: (column: string, value: string) => T }>(
-  query: T,
-  competitionId: string | null,
-): T {
+function applyCompetitionFilter<
+  T extends { eq: (column: string, value: string) => T },
+>(query: T, competitionId: string | null): T {
   if (!competitionId) {
     return query;
   }
   return query.eq("competition_id", competitionId);
-}
-
-function statusLabel(status: MatchStatus): string {
-  switch (status) {
-    case "finished":
-      return "Full time";
-    case "live":
-      return "Live";
-    case "scheduled":
-      return "Upcoming";
-    case "postponed":
-      return "Postponed";
-    case "cancelled":
-      return "Cancelled";
-  }
 }
 
 function asSingle<T>(value: T | T[] | null): T | null {
