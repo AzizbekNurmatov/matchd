@@ -29,10 +29,22 @@ const MATCH_SELECT = `
 const loadProfilePage = cache(async (username: string) => {
   const supabase = await createClient();
   const key = username.toLowerCase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, created_at")
+    .select(
+      `
+      id,
+      username,
+      created_at,
+      country_code,
+      favorite_team_id,
+      favorite_team:teams!profiles_favorite_team_id_fkey (id, name, short_name, crest_url)
+    `,
+    )
     .eq("username", key)
     .maybeSingle();
 
@@ -123,12 +135,15 @@ const loadProfilePage = cache(async (username: string) => {
     profile: {
       username: profile.username,
       createdAt: profile.created_at,
+      countryCode: profile.country_code,
+      favoriteTeam: asSingle(profile.favorite_team),
       matchesRated: ratings.length,
       reviewsWritten: reviews.length,
       averageRating,
     },
     ratings,
     reviews,
+    isOwn: user?.id === profile.id,
   };
 });
 
@@ -203,7 +218,7 @@ export default async function UserProfilePage({
 
   return (
     <Container className="py-12">
-      <ProfileHeader profile={data.profile} />
+      <ProfileHeader profile={data.profile} isOwn={data.isOwn} />
 
       <nav className="mt-10 flex gap-6 border-b border-border">
         <TabLink

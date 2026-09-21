@@ -6,6 +6,7 @@ import { StarDisplay } from "@/components/ratings/star-display";
 import { ReviewForm } from "@/components/reviews/review-form";
 import type { ReviewItem } from "@/components/reviews/types";
 import { formatRelativeTime } from "@/lib/dates";
+import { getCountryFlag, getCountryName } from "@/lib/utils/countries";
 
 type ReviewCardProps = {
   review: ReviewItem;
@@ -62,15 +63,36 @@ function ReviewHeader({
   review: ReviewItem;
   edited: boolean;
 }) {
+  const flag = getCountryFlag(review.countryCode);
+  const countryName = getCountryName(review.countryCode);
+  const clubName = review.favoriteTeam?.short_name;
+
   return (
     <header className="min-w-0">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <Link
           href={`/users/${review.username}`}
           className="font-medium text-[#f4f4f0] hover:text-[#e4b42a]"
         >
           {review.username}
         </Link>
+        {flag ? (
+          <span
+            className="text-sm leading-none"
+            title={countryName ?? undefined}
+            aria-label={countryName ? `From ${countryName}` : undefined}
+          >
+            {flag}
+          </span>
+        ) : null}
+        {review.favoriteTeam?.crest_url ? (
+          <img
+            src={review.favoriteTeam.crest_url}
+            alt={clubName ? `${clubName} supporter` : "Favorite club"}
+            title={clubName ?? "Favorite club"}
+            className="h-4 w-4 object-contain"
+          />
+        ) : null}
         {review.rating != null ? (
           <StarDisplay value={review.rating} size={14} />
         ) : null}

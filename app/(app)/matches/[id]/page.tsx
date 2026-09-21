@@ -71,7 +71,11 @@ const loadMatchPage = cache(async (id: string) => {
       body,
       created_at,
       updated_at,
-      profile:profiles!reviews_user_id_fkey (username)
+      profile:profiles!reviews_user_id_fkey (
+        username,
+        country_code,
+        favorite_team:teams!profiles_favorite_team_id_fkey (crest_url, short_name)
+      )
     `,
     )
     .eq("match_id", id)
@@ -111,11 +115,14 @@ const loadMatchPage = cache(async (id: string) => {
 
   const reviews: ReviewItem[] = (reviewsResult.data ?? []).map((review) => {
     const profile = asSingle(review.profile);
+    const favoriteTeam = asSingle(profile?.favorite_team ?? null);
 
     return {
       id: review.id,
       userId: review.user_id,
       username: profile?.username ?? "user",
+      countryCode: profile?.country_code ?? null,
+      favoriteTeam,
       body: review.body,
       createdAt: review.created_at,
       updatedAt: review.updated_at,

@@ -33,6 +33,13 @@ export type ProfileReviewItem = {
 export type ProfileHeaderData = {
   username: string;
   createdAt: string;
+  countryCode: string | null;
+  favoriteTeam: {
+    id: string;
+    name: string;
+    short_name: string | null;
+    crest_url: string | null;
+  } | null;
   matchesRated: number;
   reviewsWritten: number;
   averageRating: number | null;

@@ -231,6 +231,8 @@ export type Database = {
           display_name: string | null;
           avatar_url: string | null;
           bio: string | null;
+          country_code: string | null;
+          favorite_team_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -240,6 +242,8 @@ export type Database = {
           display_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
+          country_code?: string | null;
+          favorite_team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -249,10 +253,20 @@ export type Database = {
           display_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
+          country_code?: string | null;
+          favorite_team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "profiles_favorite_team_id_fkey";
+            columns: ["favorite_team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
@@ -277,7 +291,16 @@ export type Database = {
   };
 };
 
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileFavoriteTeam = {
+  id: string;
+  name: string;
+  short_name: string | null;
+  crest_url: string | null;
+};
+
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
+  favorite_team?: ProfileFavoriteTeam | null;
+};
 export type Competition = Database["public"]["Tables"]["competitions"]["Row"];
 export type Team = Database["public"]["Tables"]["teams"]["Row"];
 export type Match = Database["public"]["Tables"]["matches"]["Row"];
