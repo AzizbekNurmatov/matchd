@@ -107,6 +107,15 @@ export default async function MatchesPage({
 
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
+  if (tab === "all" && matches.length > 0) {
+    console.info("[matches:all] page slice", {
+      page,
+      league,
+      firstKickoff: matches[0].kickoff_at,
+      lastKickoff: matches[matches.length - 1].kickoff_at,
+    });
+  }
+
   return (
     <div className="bg-[#0f0f10]">
       <Container className="py-12 sm:py-14">
@@ -179,20 +188,20 @@ export default async function MatchesPage({
 }
 
 function MatchTicket({ match }: { match: CatalogMatch }) {
-  const scheduled = match.status === "scheduled";
-  const homeScore = scheduled ? "-" : (match.home_score ?? "-");
-  const awayScore = scheduled ? "-" : (match.away_score ?? "-");
+  const finished = match.status === "finished";
+  const homeScore = finished ? (match.home_score ?? "-") : "-";
+  const awayScore = finished ? (match.away_score ?? "-") : "-";
 
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="flex flex-col justify-between rounded-none border border-[#242426] bg-[#151516] p-4 transition-all hover:border-[#3d3b38]"
+      className="group flex flex-col justify-between rounded-none border border-[#242426] bg-[#151516] p-4 transition-all hover:border-[#3d3b38]"
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
           {match.competition?.name ?? "Match"}
         </span>
-        <span className="font-mono text-[10px] text-[#8c887b]">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
           {formatCardDate(match.kickoff_at)}
         </span>
       </div>
@@ -205,14 +214,14 @@ function MatchTicket({ match }: { match: CatalogMatch }) {
       <div className="mt-3 flex items-center justify-between border-t border-[#242426] pt-3">
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
           <span>{footerStatus(match)}</span>
-          {match.status === "finished" && match.averageRating != null ? (
+          {finished && match.averageRating != null ? (
             <span className="text-[#d4973b]">
               ★ {formatRating(match.averageRating)}
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-xs uppercase text-[#d4973b] hover:text-[#f3efe6]">
-          Rate & Log →
+        <span className="font-mono text-xs uppercase tracking-wider text-[#d4973b] transition-colors group-hover:text-[#f3efe6]">
+          {finished ? "Rate & Log →" : "Preview →"}
         </span>
       </div>
     </Link>
@@ -430,7 +439,7 @@ function footerStatus(match: CatalogMatch): string {
     case "live":
       return "Live";
     case "scheduled":
-      return formatKickoffTime(match.kickoff_at);
+      return `Fixture · ${formatKickoffTime(match.kickoff_at)}`;
     case "postponed":
       return "Postponed";
     case "cancelled":
@@ -463,7 +472,7 @@ async function fetchCatalogPage(
       .in("status", ["scheduled", "live"])
       .order("kickoff_at", { ascending: true });
   } else {
-    query = query.order("kickoff_at", { ascending: false });
+    query = query.order("kickoff_at", { ascending: true });
   }
 
   return query.range(from, to);
