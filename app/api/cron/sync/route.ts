@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { syncRecentMatchesAllLeagues } from "@/lib/sports-data/sync";
 
@@ -16,6 +17,8 @@ export async function GET(request: Request) {
   try {
     const { dateFrom, dateTo, competitions } =
       await syncRecentMatchesAllLeagues();
+
+    revalidateTag("matches", { expire: 0 });
 
     const matchesUpserted = competitions.reduce(
       (total, result) => total + result.matchesUpserted,
