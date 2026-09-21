@@ -1,8 +1,9 @@
+import { CountryFlag } from "@/components/country-flag";
 import { EditProfileModal } from "@/components/profile/edit-profile-modal";
 import type { ProfileHeaderData } from "@/components/profile/types";
 import { formatMonthYear } from "@/lib/dates";
 import { formatRating } from "@/lib/ratings";
-import { getCountryFlag, getCountryName } from "@/lib/utils/countries";
+import { getCountryName } from "@/lib/utils/countries";
 
 export function ProfileHeader({
   profile,
@@ -11,23 +12,18 @@ export function ProfileHeader({
   profile: ProfileHeaderData;
   isOwn: boolean;
 }) {
-  const flag = getCountryFlag(profile.countryCode);
   const countryName = getCountryName(profile.countryCode);
 
   return (
     <section className="rounded-lg border border-border bg-[#161616] px-5 py-8 sm:px-8">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-serif text-4xl tracking-tight text-[#f4f4f0]">
+        <h1 className="flex items-center gap-2.5 font-serif text-4xl tracking-tight text-[#f4f4f0]">
           {profile.username}
-          {flag ? (
-            <span
-              className="ml-2 align-middle text-2xl"
-              title={countryName ?? undefined}
-              aria-label={countryName ? `From ${countryName}` : undefined}
-            >
-              {flag}
-            </span>
-          ) : null}
+          <CountryFlag
+            code={profile.countryCode}
+            title={countryName ?? undefined}
+            className="h-[15px] w-5 rounded-xs"
+          />
         </h1>
         {isOwn ? (
           <EditProfileModal

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CountryFlag } from "@/components/country-flag";
 import { StarDisplay } from "@/components/ratings/star-display";
 import { ReviewForm } from "@/components/reviews/review-form";
 import type { ReviewItem } from "@/components/reviews/types";
 import { formatRelativeTime } from "@/lib/dates";
-import { getCountryFlag, getCountryName } from "@/lib/utils/countries";
+import { getCountryName } from "@/lib/utils/countries";
 
 type ReviewCardProps = {
   review: ReviewItem;
@@ -63,7 +64,6 @@ function ReviewHeader({
   review: ReviewItem;
   edited: boolean;
 }) {
-  const flag = getCountryFlag(review.countryCode);
   const countryName = getCountryName(review.countryCode);
   const clubName = review.favoriteTeam?.short_name;
 
@@ -76,22 +76,22 @@ function ReviewHeader({
         >
           {review.username}
         </Link>
-        {flag ? (
-          <span
-            className="text-sm leading-none"
-            title={countryName ?? undefined}
-            aria-label={countryName ? `From ${countryName}` : undefined}
-          >
-            {flag}
+        {review.countryCode || review.favoriteTeam?.crest_url ? (
+          <span className="inline-flex items-center gap-1.5">
+            <CountryFlag
+              code={review.countryCode}
+              title={countryName ?? undefined}
+              className="h-3 w-4 rounded-xs"
+            />
+            {review.favoriteTeam?.crest_url ? (
+              <img
+                src={review.favoriteTeam.crest_url}
+                alt={clubName ? `${clubName} supporter` : "Favorite club"}
+                title={clubName ?? "Favorite club"}
+                className="h-4 w-4 object-contain"
+              />
+            ) : null}
           </span>
-        ) : null}
-        {review.favoriteTeam?.crest_url ? (
-          <img
-            src={review.favoriteTeam.crest_url}
-            alt={clubName ? `${clubName} supporter` : "Favorite club"}
-            title={clubName ?? "Favorite club"}
-            className="h-4 w-4 object-contain"
-          />
         ) : null}
         {review.rating != null ? (
           <StarDisplay value={review.rating} size={14} />
