@@ -11,14 +11,19 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { CountryFlag } from "@/components/country-flag";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   searchTeams,
   updateUserProfile,
   type TeamSearchLeague,
   type TeamSearchResult,
 } from "@/lib/actions/profile";
+import { createClient } from "@/lib/supabase/client";
 import { FOOTBALL_COUNTRIES } from "@/lib/utils/countries";
 import { cn } from "@/lib/utils";
+
+const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
 const LEAGUE_FILTERS: { id: TeamSearchLeague; label: string }[] = [
   { id: "all", label: "All" },
@@ -34,28 +39,35 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
 type EditProfileModalProps = {
   initialUsername: string;
+  initialAvatarUrl: string | null;
   countryCode: string | null;
   favoriteTeam: TeamSearchResult | null;
 };
 
 export function EditProfileModal({
   initialUsername,
+  initialAvatarUrl,
   countryCode,
   favoriteTeam,
 }: EditProfileModalProps) {
   const router = useRouter();
   const titleId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState(initialUsername);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
   const [country, setCountry] = useState(countryCode ?? "");
   const [selectedTeam, setSelectedTeam] = useState<TeamSearchResult | null>(
     favoriteTeam,
   );
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const busy = isPending || uploading;
 
   function openModal() {
     setUsername(initialUsername);
+    setAvatarUrl(initialAvatarUrl);
     setCountry(countryCode ?? "");
     setSelectedTeam(favoriteTeam);
     setError(null);
@@ -84,14 +96,69 @@ export function EditProfileModal({
   }, [open]);
 
   function close() {
-    if (isPending) {
+    if (busy) {
       return;
     }
     setOpen(false);
   }
 
+  async function onAvatarFile(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    if (!AVATAR_TYPES.includes(file.type as (typeof AVATAR_TYPES)[number])) {
+      setError("Use a PNG, JPEG, or WebP image.");
+      return;
+    }
+
+    if (file.size > AVATAR_MAX_BYTES) {
+      setError("Photos must be 2MB or smaller.");
+      return;
+    }
+
+    setError(null);
+    setUploading(true);
+
+    const extension =
+      file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError("You need to log in to upload a photo.");
+        return;
+      }
+
+      const path = `${user.id}/${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+      if (uploadError) {
+        setError("Could not upload that photo. Try again.");
+        return;
+      }
+
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      setAvatarUrl(data.publicUrl);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
+    }
+  }
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (uploading) {
+      return;
+    }
     setError(null);
 
     const trimmedUsername = username.trim();
@@ -105,6 +172,7 @@ export function EditProfileModal({
     startTransition(async () => {
       const result = await updateUserProfile({
         username: trimmedUsername,
+        avatarUrl,
         countryCode: country || null,
         favoriteTeamId: selectedTeam?.id ?? null,
       });
@@ -170,6 +238,52 @@ export function EditProfileModal({
             </div>
 
             <form className="mt-6 flex flex-col gap-5" onSubmit={onSubmit}>
+              <div className="flex items-center gap-4">
+                <UserAvatar
+                  size="lg"
+                  src={avatarUrl}
+                  username={username.trim() || initialUsername}
+                />
+                <div className="flex min-w-0 flex-col items-start gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
+                    Avatar
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label
+                      className={cn(
+                        "cursor-pointer border border-[#2e2d2b] bg-[#1a1918] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#f3efe6] transition-colors hover:border-[#d4973b]",
+                        busy && "pointer-events-none opacity-70",
+                      )}
+                    >
+                      {uploading ? "Uploading..." : "Upload Photo"}
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        disabled={busy}
+                        className="sr-only"
+                        onChange={(event) => {
+                          void onAvatarFile(event.target.files?.[0]);
+                        }}
+                      />
+                    </label>
+                    {avatarUrl ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setAvatarUrl(null)}
+                        className="font-mono text-xs uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6] disabled:opacity-70"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                  <span className="text-xs text-[#8c887b]">
+                    PNG, JPEG, or WebP. 2MB max.
+                  </span>
+                </div>
+              </div>
+
               <label className="flex flex-col gap-2">
                 <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
                   USERNAME
@@ -177,7 +291,7 @@ export function EditProfileModal({
                 <input
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  disabled={isPending}
+                  disabled={busy}
                   autoComplete="username"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -192,13 +306,13 @@ export function EditProfileModal({
               <CountryCombobox
                 value={country}
                 onChange={setCountry}
-                disabled={isPending}
+                disabled={busy}
               />
 
               <ClubPicker
                 selectedTeam={selectedTeam}
                 onSelect={setSelectedTeam}
-                disabled={isPending}
+                disabled={busy}
               />
 
               {error ? (
@@ -214,14 +328,14 @@ export function EditProfileModal({
                 <button
                   type="button"
                   onClick={close}
-                  disabled={isPending}
+                  disabled={busy}
                   className="font-mono text-xs uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6] disabled:opacity-70"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={busy}
                   className="border border-[#d4973b] bg-[#d4973b] px-4 py-2 font-mono text-xs uppercase tracking-wider text-[#151516] transition-colors hover:bg-[#e0a84a] disabled:opacity-70"
                 >
                   {isPending ? "Saving..." : "Save"}

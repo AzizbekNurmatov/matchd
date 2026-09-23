@@ -32,6 +32,7 @@ export type ProfileReviewItem = {
 
 export type ProfileHeaderData = {
   username: string;
+  avatarUrl: string | null;
   createdAt: string;
   countryCode: string | null;
   favoriteTeam: {

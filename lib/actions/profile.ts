@@ -201,6 +201,41 @@ export async function searchTeams(
   }));
 }
 
+function parseAvatarUrl(
+  value: string | null,
+): { url: string | null } | { error: string } {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return { url: null };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return { error: "That photo could not be saved." };
+  }
+
+  let projectHost = "";
+  try {
+    projectHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+  } catch {
+    projectHost = "";
+  }
+
+  const allowedHost =
+    parsed.hostname === projectHost || parsed.hostname.endsWith(".supabase.co");
+  const publicAvatar = parsed.pathname.includes(
+    "/storage/v1/object/public/avatars/",
+  );
+
+  if (parsed.protocol !== "https:" || !allowedHost || !publicAvatar) {
+    return { error: "That photo could not be saved." };
+  }
+
+  return { url: parsed.toString() };
+}
+
 function cleanUsername(value: string): string | { error: string } {
   const trimmed = value.trim();
   if (!USERNAME_PATTERN.test(trimmed)) {
@@ -214,10 +249,12 @@ export async function updateUserProfile({
   username,
   countryCode,
   favoriteTeamId,
+  avatarUrl,
 }: {
   username?: string;
   countryCode: string | null;
   favoriteTeamId: string | null;
+  avatarUrl?: string | null;
 }): Promise<UpdateProfileResult> {
   const nextCountry = normalizeOptional(countryCode)?.toUpperCase() ?? null;
   const nextTeamId = normalizeOptional(favoriteTeamId);
@@ -228,6 +265,15 @@ export async function updateUserProfile({
 
   if (nextTeamId && !UUID_PATTERN.test(nextTeamId)) {
     return { error: "That club could not be saved." };
+  }
+
+  let nextAvatar: string | null | undefined;
+  if (avatarUrl !== undefined) {
+    const parsedAvatar = parseAvatarUrl(avatarUrl);
+    if ("error" in parsedAvatar) {
+      return parsedAvatar;
+    }
+    nextAvatar = parsedAvatar.url;
   }
 
   const supabase = await createClient();
@@ -293,6 +339,7 @@ export async function updateUserProfile({
       username: newUsername,
       country_code: nextCountry,
       favorite_team_id: nextTeamId,
+      ...(nextAvatar !== undefined ? { avatar_url: nextAvatar } : {}),
     })
     .eq("id", user.id);
 
@@ -319,10 +366,13 @@ export async function updateUserProfile({
   }
 
   revalidatePath(`/users/${current.username}`);
+  revalidatePath(`/u/${current.username}`);
   if (newUsername !== current.username) {
     revalidatePath(`/users/${newUsername}`);
+    revalidatePath(`/u/${newUsername}`);
   }
   revalidatePath("/matches");
   revalidatePath("/matches/[id]", "page");
+  revalidatePath("/", "layout");
   return { success: true, newUsername };
 }

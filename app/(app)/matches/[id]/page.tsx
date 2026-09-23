@@ -73,6 +73,7 @@ const loadMatchPage = cache(async (id: string) => {
       updated_at,
       profile:profiles!reviews_user_id_fkey (
         username,
+        avatar_url,
         country_code,
         favorite_team:teams!profiles_favorite_team_id_fkey (crest_url, short_name)
       )
@@ -120,9 +121,12 @@ const loadMatchPage = cache(async (id: string) => {
     return {
       id: review.id,
       userId: review.user_id,
-      username: profile?.username ?? "user",
-      countryCode: profile?.country_code ?? null,
-      favoriteTeam,
+      author: {
+        username: profile?.username ?? "user",
+        avatarUrl: profile?.avatar_url ?? null,
+        countryCode: profile?.country_code ?? null,
+        favoriteTeam,
+      },
       body: review.body,
       createdAt: review.created_at,
       updatedAt: review.updated_at,

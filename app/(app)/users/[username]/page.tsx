@@ -42,6 +42,7 @@ const loadProfilePage = cache(async (username: string) => {
       `
       id,
       username,
+      avatar_url,
       created_at,
       country_code,
       favorite_team_id,
@@ -137,6 +138,7 @@ const loadProfilePage = cache(async (username: string) => {
   return {
     profile: {
       username: profile.username,
+      avatarUrl: profile.avatar_url,
       createdAt: profile.created_at,
       countryCode: profile.country_code,
       favoriteTeam: asSingle(profile.favorite_team),
