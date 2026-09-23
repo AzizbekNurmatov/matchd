@@ -30,18 +30,23 @@ const LEAGUE_FILTERS: { id: TeamSearchLeague; label: string }[] = [
   { id: "FL1", label: "Ligue 1" },
 ];
 
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+
 type EditProfileModalProps = {
+  initialUsername: string;
   countryCode: string | null;
   favoriteTeam: TeamSearchResult | null;
 };
 
 export function EditProfileModal({
+  initialUsername,
   countryCode,
   favoriteTeam,
 }: EditProfileModalProps) {
   const router = useRouter();
   const titleId = useId();
   const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState(initialUsername);
   const [country, setCountry] = useState(countryCode ?? "");
   const [selectedTeam, setSelectedTeam] = useState<TeamSearchResult | null>(
     favoriteTeam,
@@ -49,15 +54,13 @@ export function EditProfileModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  function openModal() {
+    setUsername(initialUsername);
     setCountry(countryCode ?? "");
     setSelectedTeam(favoriteTeam);
     setError(null);
-  }, [open, countryCode, favoriteTeam]);
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) {
@@ -91,18 +94,32 @@ export function EditProfileModal({
     event.preventDefault();
     setError(null);
 
+    const trimmedUsername = username.trim();
+    if (!USERNAME_PATTERN.test(trimmedUsername)) {
+      setError(
+        "Usernames must be 3-20 characters and use only letters, numbers, and underscores.",
+      );
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateUserProfile({
+        username: trimmedUsername,
         countryCode: country || null,
         favoriteTeamId: selectedTeam?.id ?? null,
       });
 
-      if (!result.ok) {
+      if ("error" in result) {
         setError(result.error);
         return;
       }
 
       setOpen(false);
+      if (result.newUsername !== initialUsername.trim().toLowerCase()) {
+        router.push(`/users/${result.newUsername}`);
+        return;
+      }
+
       router.refresh();
     });
   }
@@ -111,7 +128,7 @@ export function EditProfileModal({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         className="shrink-0 border border-[#2e2d2b] bg-[#1a1918] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#f3efe6] transition-colors hover:border-[#d4973b]"
       >
         Edit Profile
@@ -153,6 +170,25 @@ export function EditProfileModal({
             </div>
 
             <form className="mt-6 flex flex-col gap-5" onSubmit={onSubmit}>
+              <label className="flex flex-col gap-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
+                  USERNAME
+                </span>
+                <input
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  disabled={isPending}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full rounded-none border border-[#242426] bg-[#111112] px-3 py-2 font-mono text-sm tracking-wide text-[#f3efe6] outline-none focus:border-[#d4973b] disabled:opacity-70"
+                />
+                <span className="text-xs text-[#8c887b]">
+                  3-20 characters, letters, numbers, and underscores only.
+                </span>
+              </label>
+
               <CountryCombobox
                 value={country}
                 onChange={setCountry}
@@ -165,7 +201,14 @@ export function EditProfileModal({
                 disabled={isPending}
               />
 
-              {error ? <p className="text-sm text-red-400">{error}</p> : null}
+              {error ? (
+                <p
+                  role="alert"
+                  className="border border-red-400/40 bg-red-400/10 px-3 py-2 text-sm text-amber-200"
+                >
+                  {error}
+                </p>
+              ) : null}
 
               <div className="mt-1 flex items-center justify-end gap-3">
                 <button

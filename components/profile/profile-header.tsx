@@ -27,6 +27,7 @@ export function ProfileHeader({
         </h1>
         {isOwn ? (
           <EditProfileModal
+            initialUsername={profile.username}
             countryCode={profile.countryCode}
             favoriteTeam={profile.favoriteTeam}
           />

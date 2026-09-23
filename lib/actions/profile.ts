@@ -6,9 +6,14 @@ import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
 import { isFootballCountryCode } from "@/lib/utils/countries";
 import type { ProfileFavoriteTeam } from "@/types/database";
 
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type UpdateProfileResult =
+  | { success: true; newUsername: string }
+  | { error: string };
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+const USERNAME_TAKEN = "Username is already taken.";
+const USERNAME_INVALID =
+  "Usernames must be 3-20 characters and use only letters, numbers, and underscores.";
 
 export type TeamSearchResult = ProfileFavoriteTeam & {
   leagueName?: string | null;
@@ -196,22 +201,33 @@ export async function searchTeams(
   }));
 }
 
+function cleanUsername(value: string): string | { error: string } {
+  const trimmed = value.trim();
+  if (!USERNAME_PATTERN.test(trimmed)) {
+    return { error: USERNAME_INVALID };
+  }
+
+  return trimmed.toLowerCase();
+}
+
 export async function updateUserProfile({
+  username,
   countryCode,
   favoriteTeamId,
 }: {
+  username?: string;
   countryCode: string | null;
   favoriteTeamId: string | null;
-}): Promise<ActionResult> {
+}): Promise<UpdateProfileResult> {
   const nextCountry = normalizeOptional(countryCode)?.toUpperCase() ?? null;
   const nextTeamId = normalizeOptional(favoriteTeamId);
 
   if (nextCountry && !isFootballCountryCode(nextCountry)) {
-    return { ok: false, error: "Choose a country from the list." };
+    return { error: "Choose a country from the list." };
   }
 
   if (nextTeamId && !UUID_PATTERN.test(nextTeamId)) {
-    return { ok: false, error: "That club could not be saved." };
+    return { error: "That club could not be saved." };
   }
 
   const supabase = await createClient();
@@ -220,7 +236,43 @@ export async function updateUserProfile({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { ok: false, error: "You need to log in to edit your profile." };
+    return { error: "You need to log in to edit your profile." };
+  }
+
+  const { data: current, error: currentError } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (currentError || !current) {
+    return { error: "Could not update your profile." };
+  }
+
+  let newUsername = current.username;
+  if (username !== undefined) {
+    const cleaned = cleanUsername(username);
+    if (typeof cleaned !== "string") {
+      return cleaned;
+    }
+    newUsername = cleaned;
+  }
+
+  if (newUsername !== current.username) {
+    const { data: taken, error: takenError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", newUsername)
+      .neq("id", user.id)
+      .maybeSingle();
+
+    if (takenError) {
+      return { error: "Could not check that username. Try again." };
+    }
+
+    if (taken) {
+      return { error: USERNAME_TAKEN };
+    }
   }
 
   if (nextTeamId) {
@@ -231,29 +283,46 @@ export async function updateUserProfile({
       .maybeSingle();
 
     if (teamError || !team) {
-      return { ok: false, error: "That club could not be found." };
+      return { error: "That club could not be found." };
     }
   }
 
-  const { data: profile, error } = await supabase
+  const { error } = await supabase
     .from("profiles")
     .update({
+      username: newUsername,
       country_code: nextCountry,
       favorite_team_id: nextTeamId,
     })
-    .eq("id", user.id)
-    .select("username")
-    .single();
+    .eq("id", user.id);
 
-  if (error || !profile) {
-    return {
-      ok: false,
-      error: error?.message ?? "Could not update your profile.",
-    };
+  if (error) {
+    if (error.code === "23505") {
+      return { error: USERNAME_TAKEN };
+    }
+
+    return { error: "Could not update your profile." };
   }
 
-  revalidatePath(`/users/${profile.username}`);
+  const { error: authError } = await supabase.auth.updateUser({
+    data: { username: newUsername },
+  });
+
+  if (authError && newUsername !== current.username) {
+    await supabase
+      .from("profiles")
+      .update({ username: current.username })
+      .eq("id", user.id);
+    revalidatePath(`/users/${current.username}`);
+
+    return { error: "Could not update your username. Try again." };
+  }
+
+  revalidatePath(`/users/${current.username}`);
+  if (newUsername !== current.username) {
+    revalidatePath(`/users/${newUsername}`);
+  }
   revalidatePath("/matches");
   revalidatePath("/matches/[id]", "page");
-  return { ok: true };
+  return { success: true, newUsername };
 }
