@@ -6,14 +6,17 @@ import { Container } from "@/components/layout/container";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileRatings } from "@/components/profile/profile-ratings";
 import { ProfileReviews } from "@/components/profile/profile-reviews";
+import { SeasonMatchdayGrid } from "@/components/profile/season-matchday-grid";
 import type {
   ProfileMatchSummary,
   ProfileRatingItem,
   ProfileReviewItem,
   ProfileTeam,
 } from "@/components/profile/types";
-import { createClient } from "@/lib/supabase/server";
+import { buildMatchdayActivity } from "@/lib/queries/profile";
 import { formatRating, toRatingNumber } from "@/lib/ratings";
+import { buildSeasonGrid } from "@/lib/season-matchday";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 const MATCH_SELECT = `
@@ -143,6 +146,8 @@ const loadProfilePage = cache(async (username: string) => {
     },
     ratings,
     reviews,
+    matchdays: buildMatchdayActivity(ratings),
+    seasonGrid: buildSeasonGrid(new Date()),
     isOwn: user?.id === profile.id,
   };
 });
@@ -219,6 +224,11 @@ export default async function UserProfilePage({
   return (
     <Container className="py-12">
       <ProfileHeader profile={data.profile} isOwn={data.isOwn} />
+
+      <SeasonMatchdayGrid
+        activity={data.matchdays}
+        grid={data.seasonGrid}
+      />
 
       <nav className="mt-10 flex gap-6 border-b border-border">
         <TabLink
