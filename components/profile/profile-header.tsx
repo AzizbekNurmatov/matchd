@@ -16,7 +16,7 @@ export function ProfileHeader({
   const countryName = getCountryName(profile.countryCode);
 
   return (
-    <section className="rounded-lg border border-border bg-[#161616] px-5 py-8 sm:px-8">
+    <section className="rounded-lg border border-border bg-[#F4F6F8] px-5 py-8 sm:px-8">
       <div className="flex items-start gap-4 sm:gap-5">
         <UserAvatar
           size="lg"
@@ -25,7 +25,7 @@ export function ProfileHeader({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-4">
-            <h1 className="flex items-center gap-2.5 font-serif text-4xl tracking-tight text-[#f4f4f0]">
+            <h1 className="flex items-center gap-2.5 font-serif text-4xl tracking-tight text-[#0F172A]">
               {profile.username}
               <CountryFlag
                 code={profile.countryCode}
@@ -42,12 +42,12 @@ export function ProfileHeader({
               />
             ) : null}
           </div>
-          <p className="mt-2 text-sm text-[#8e8e8e]">
+          <p className="mt-2 text-sm text-[#475569]">
             Member since {formatMonthYear(profile.createdAt)}
           </p>
 
           {profile.favoriteTeam ? (
-            <div className="mt-4 inline-flex items-center gap-2 border border-[#242426] bg-[#151516] px-2.5 py-1.5">
+            <div className="mt-4 inline-flex items-center gap-2 border border-[#CBD2D9] bg-[#F4F6F8] px-2.5 py-1.5">
               {profile.favoriteTeam.crest_url ? (
                 <img
                   src={profile.favoriteTeam.crest_url}
@@ -55,11 +55,11 @@ export function ProfileHeader({
                   className="h-[18px] w-[18px] object-contain"
                 />
               ) : (
-                <span className="flex h-[18px] w-[18px] items-center justify-center font-mono text-[9px] text-[#8c887b]">
+                <span className="flex h-[18px] w-[18px] items-center justify-center font-mono text-[9px] text-[#475569]">
                   {profile.favoriteTeam.name.slice(0, 1)}
                 </span>
               )}
-              <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#475569]">
                 {profile.favoriteTeam.name}
               </span>
             </div>
@@ -104,13 +104,13 @@ function StatPill({
       <span
         className={
           accent
-            ? "font-serif text-xl tracking-tight text-[#e4b42a]"
-            : "font-serif text-xl tracking-tight text-[#f4f4f0]"
+            ? "font-serif text-xl tracking-tight text-[#B45309]"
+            : "font-serif text-xl tracking-tight text-[#0F172A]"
         }
       >
         {value}
       </span>
-      <span className="text-xs uppercase tracking-[0.16em] text-[#8e8e8e]">
+      <span className="text-xs uppercase tracking-[0.16em] text-[#475569]">
         {label}
       </span>
     </div>

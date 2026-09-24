@@ -11,9 +11,9 @@ export function MatchStrip({ match, href }: MatchStripProps) {
   const content = (
     <div className="flex items-center gap-2">
       <TeamSide team={match.homeTeam} align="left" />
-      <p className="shrink-0 px-1 font-mono text-sm font-medium text-[#f4f4f0]">
+      <p className="shrink-0 px-1 font-mono text-sm font-medium text-[#0F172A]">
         {match.homeScore ?? "–"}
-        <span className="mx-1 text-[#8e8e8e]">–</span>
+        <span className="mx-1 text-[#475569]">–</span>
         {match.awayScore ?? "–"}
       </p>
       <TeamSide team={match.awayTeam} align="right" />
@@ -42,7 +42,7 @@ function TeamSide({
   const crest = team?.crest_url ? (
     <img src={team.crest_url} alt="" className="h-7 w-7 object-contain" />
   ) : (
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#11110f] text-[10px] uppercase text-[#8e8e8e]">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E4E7EB] text-[10px] uppercase text-[#475569]">
       {label.slice(0, 1)}
     </span>
   );
@@ -55,7 +55,7 @@ function TeamSide({
       )}
     >
       {crest}
-      <span className="truncate text-sm font-medium text-[#f4f4f0]">{label}</span>
+      <span className="truncate text-sm font-medium text-[#0F172A]">{label}</span>
     </span>
   );
 }

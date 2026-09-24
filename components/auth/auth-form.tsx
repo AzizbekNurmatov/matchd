@@ -68,10 +68,10 @@ export function AuthForm({
           </button>
         </span>
       </label>
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button
         type="submit"
-        className="mt-1 h-10 rounded-md bg-foreground text-sm font-medium text-background hover:bg-zinc-200"
+        className="mt-1 h-10 rounded-md bg-[#0F172A] text-sm font-medium text-[#F8FAFC] hover:bg-[#1E293B]"
       >
         {submitLabel}
       </button>

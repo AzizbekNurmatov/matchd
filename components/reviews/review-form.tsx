@@ -92,7 +92,7 @@ export function ReviewForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-md border border-border bg-[#161616] px-4 py-3 text-left text-sm text-[#8e8e8e] transition-colors hover:border-[#383838] hover:text-[#f4f4f0]"
+        className="w-full rounded-md border border-border bg-[#F4F6F8] px-4 py-3 text-left text-sm text-[#475569] transition-colors hover:border-[#94A3B8] hover:text-[#0F172A]"
       >
         Write a review...
       </button>
@@ -120,13 +120,13 @@ export function ReviewForm({
         rows={6}
         placeholder="What did you make of this match?"
         className={cn(
-          "w-full resize-y rounded-md border border-border bg-[#161616] px-3 py-3 text-sm leading-relaxed text-[#f4f4f0]",
-          "outline-none placeholder:text-[#8e8e8e] focus:border-amber-400",
+          "w-full resize-y rounded-md border border-border bg-[#F4F6F8] px-3 py-3 text-sm leading-relaxed text-[#0F172A]",
+          "outline-none placeholder:text-[#475569] focus:border-[#9A3412]",
           "disabled:opacity-70",
         )}
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-[#8e8e8e]">
+        <p className="text-xs text-[#475569]">
           {body.length}/{REVIEW_MAX_LENGTH}
         </p>
         <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export function ReviewForm({
                 setError(null);
               }}
               disabled={isPending}
-              className="text-sm text-[#8e8e8e] hover:text-[#f4f4f0] disabled:opacity-70"
+              className="text-sm text-[#475569] hover:text-[#0F172A] disabled:opacity-70"
             >
               Cancel
             </button>
@@ -153,7 +153,7 @@ export function ReviewForm({
               type="button"
               onClick={remove}
               disabled={isPending}
-              className="text-sm text-[#8e8e8e] hover:text-red-400 disabled:opacity-70"
+              className="text-sm text-[#475569] hover:text-red-700 disabled:opacity-70"
             >
               {pendingAction === "delete" ? "Deleting..." : "Delete"}
             </button>
@@ -161,7 +161,7 @@ export function ReviewForm({
           <button
             type="submit"
             disabled={isPending}
-            className="h-9 rounded-md bg-[#f4f4f0] px-4 text-sm font-medium text-[#161616] hover:bg-zinc-200 disabled:opacity-70"
+            className="h-9 rounded-md bg-[#0F172A] px-4 text-sm font-medium text-[#F8FAFC] hover:bg-[#1E293B] disabled:opacity-70"
           >
             {pendingAction === "save"
               ? "Saving..."
@@ -171,7 +171,7 @@ export function ReviewForm({
           </button>
         </div>
       </div>
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </form>
   );
 }

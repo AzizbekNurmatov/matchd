@@ -13,7 +13,7 @@ type ProfileRatingsProps = {
 export function ProfileRatings({ username, ratings }: ProfileRatingsProps) {
   if (ratings.length === 0) {
     return (
-      <p className="text-sm text-[#8e8e8e]">
+      <p className="text-sm text-[#475569]">
         {username} hasn&apos;t rated any matches yet.
       </p>
     );
@@ -25,9 +25,9 @@ export function ProfileRatings({ username, ratings }: ProfileRatingsProps) {
         <li key={item.id}>
           <Link
             href={`/matches/${item.match.id}`}
-            className="group flex h-full flex-col rounded-lg border border-border bg-[#161616] p-4 transition-colors hover:border-[#383838] hover:bg-[#1c1c1c]"
+            className="group flex h-full flex-col rounded-lg border border-border bg-[#F4F6F8] p-4 transition-colors hover:border-[#94A3B8] hover:bg-[#E8ECEE]"
           >
-            <div className="flex items-center justify-between gap-3 text-xs text-[#8e8e8e]">
+            <div className="flex items-center justify-between gap-3 text-xs text-[#475569]">
               <span className="truncate">
                 {item.match.competitionName ?? "Match"}
               </span>
@@ -42,7 +42,7 @@ export function ProfileRatings({ username, ratings }: ProfileRatingsProps) {
 
             <div className="mt-auto flex items-center justify-between pt-4">
               <StarDisplay value={item.rating} size={16} />
-              <span className="font-serif text-lg text-[#e4b42a]">
+              <span className="font-serif text-lg text-[#B45309]">
                 {formatRating(item.rating)}
               </span>
             </div>

@@ -121,7 +121,7 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
             );
           })}
         </div>
-        <p className="min-w-[2.5rem] font-serif text-2xl tracking-tight text-[#e4b42a]">
+        <p className="min-w-[2.5rem] font-serif text-2xl tracking-tight text-[#B45309]">
           {shown > 0 ? formatRating(shown) : "–"}
         </p>
       </div>
@@ -132,7 +132,7 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
             ? `You rated this ${formatRating(selected)} · hover to change`
             : "Rate this match"}
       </p>
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>
   );
 }

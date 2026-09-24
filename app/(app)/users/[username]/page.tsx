@@ -284,12 +284,12 @@ function TabLink({
       className={cn(
         "-mb-px border-b pb-3 text-sm",
         active
-          ? "border-[#e4b42a] text-[#f4f4f0]"
-          : "border-transparent text-[#8e8e8e] hover:text-[#f4f4f0]",
+          ? "border-[#9A3412] text-[#0F172A]"
+          : "border-transparent text-[#475569] hover:text-[#0F172A]",
       )}
     >
       {children}
-      <span className="ml-2 text-xs text-[#8e8e8e]">{count}</span>
+      <span className="ml-2 text-xs text-[#475569]">{count}</span>
     </Link>
   );
 }

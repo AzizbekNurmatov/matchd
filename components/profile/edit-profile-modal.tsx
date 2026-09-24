@@ -197,13 +197,13 @@ export function EditProfileModal({
       <button
         type="button"
         onClick={openModal}
-        className="shrink-0 border border-[#2e2d2b] bg-[#1a1918] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#f3efe6] transition-colors hover:border-[#d4973b]"
+        className="shrink-0 border border-[#CBD2D9] bg-[#E8ECEE] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#0F172A] transition-colors hover:border-[#9A3412]"
       >
         Edit Profile
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-16 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#0F172A]/40 px-4 py-16 sm:items-center">
           <button
             type="button"
             aria-label="Close edit profile"
@@ -214,16 +214,16 @@ export function EditProfileModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 w-full max-w-lg border border-[#242426] bg-[#151516] p-5 shadow-2xl sm:p-6"
+            className="relative z-10 w-full max-w-lg border border-[#CBD2D9] bg-[#F4F6F8] p-5 shadow-2xl sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#8c887b]">
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#475569]">
                   Supporter Flair
                 </p>
                 <h2
                   id={titleId}
-                  className="mt-2 font-[family-name:var(--font-bebas)] text-3xl tracking-wide text-[#f3efe6]"
+                  className="mt-2 font-[family-name:var(--font-bebas)] text-3xl tracking-wide text-[#0F172A]"
                 >
                   EDIT PROFILE
                 </h2>
@@ -231,7 +231,7 @@ export function EditProfileModal({
               <button
                 type="button"
                 onClick={close}
-                className="font-mono text-xs uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6]"
+                className="font-mono text-xs uppercase tracking-wider text-[#475569] hover:text-[#0F172A]"
               >
                 Close
               </button>
@@ -245,13 +245,13 @@ export function EditProfileModal({
                   username={username.trim() || initialUsername}
                 />
                 <div className="flex min-w-0 flex-col items-start gap-2">
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#475569]">
                     Avatar
                   </span>
                   <div className="flex flex-wrap items-center gap-3">
                     <label
                       className={cn(
-                        "cursor-pointer border border-[#2e2d2b] bg-[#1a1918] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#f3efe6] transition-colors hover:border-[#d4973b]",
+                        "cursor-pointer border border-[#CBD2D9] bg-[#E8ECEE] px-3 py-1 font-mono text-xs uppercase tracking-wider text-[#0F172A] transition-colors hover:border-[#9A3412]",
                         busy && "pointer-events-none opacity-70",
                       )}
                     >
@@ -272,20 +272,20 @@ export function EditProfileModal({
                         type="button"
                         disabled={busy}
                         onClick={() => setAvatarUrl(null)}
-                        className="font-mono text-xs uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6] disabled:opacity-70"
+                        className="font-mono text-xs uppercase tracking-wider text-[#475569] hover:text-[#0F172A] disabled:opacity-70"
                       >
                         Remove
                       </button>
                     ) : null}
                   </div>
-                  <span className="text-xs text-[#8c887b]">
+                  <span className="text-xs text-[#475569]">
                     PNG, JPEG, or WebP. 2MB max.
                   </span>
                 </div>
               </div>
 
               <label className="flex flex-col gap-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#8c887b]">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#475569]">
                   USERNAME
                 </span>
                 <input
@@ -296,9 +296,9 @@ export function EditProfileModal({
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full rounded-none border border-[#242426] bg-[#111112] px-3 py-2 font-mono text-sm tracking-wide text-[#f3efe6] outline-none focus:border-[#d4973b] disabled:opacity-70"
+                  className="w-full rounded-none border border-[#CBD2D9] bg-[#E4E7EB] px-3 py-2 font-mono text-sm tracking-wide text-[#0F172A] outline-none focus:border-[#9A3412] disabled:opacity-70"
                 />
-                <span className="text-xs text-[#8c887b]">
+                <span className="text-xs text-[#475569]">
                   3-20 characters, letters, numbers, and underscores only.
                 </span>
               </label>
@@ -318,7 +318,7 @@ export function EditProfileModal({
               {error ? (
                 <p
                   role="alert"
-                  className="border border-red-400/40 bg-red-400/10 px-3 py-2 text-sm text-amber-200"
+                  className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
                 >
                   {error}
                 </p>
@@ -329,14 +329,14 @@ export function EditProfileModal({
                   type="button"
                   onClick={close}
                   disabled={busy}
-                  className="font-mono text-xs uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6] disabled:opacity-70"
+                  className="font-mono text-xs uppercase tracking-wider text-[#475569] hover:text-[#0F172A] disabled:opacity-70"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="border border-[#d4973b] bg-[#d4973b] px-4 py-2 font-mono text-xs uppercase tracking-wider text-[#151516] transition-colors hover:bg-[#e0a84a] disabled:opacity-70"
+                  className="border border-[#0F172A] bg-[#0F172A] px-4 py-2 font-mono text-xs uppercase tracking-wider text-[#F8FAFC] transition-colors hover:bg-[#1E293B] disabled:opacity-70"
                 >
                   {isPending ? "Saving..." : "Save"}
                 </button>
@@ -401,49 +401,49 @@ function CountryCombobox({
 
   return (
     <div ref={rootRef} className="flex flex-col gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-wider text-[#8c887b]">
+      <span className="font-mono text-[11px] uppercase tracking-wider text-[#475569]">
         Country
       </span>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className="flex h-10 w-full items-center justify-between gap-3 border border-[#242426] bg-[#0f0f10] px-3 text-left outline-none hover:border-[#3d3b38] focus:border-[#d4973b] disabled:opacity-70"
+        className="flex h-10 w-full items-center justify-between gap-3 border border-[#CBD2D9] bg-[#E4E7EB] px-3 text-left outline-none hover:border-[#94A3B8] focus:border-[#9A3412] disabled:opacity-70"
       >
         <span className="flex min-w-0 items-center gap-2.5">
           {selected ? (
             <>
               <CountryFlag code={selected.code} className="h-[15px] w-5" />
-              <span className="truncate text-sm text-[#f3efe6]">
+              <span className="truncate text-sm text-[#0F172A]">
                 {selected.name}
               </span>
             </>
           ) : (
-            <span className="text-sm text-[#8c887b]">No country</span>
+            <span className="text-sm text-[#475569]">No country</span>
           )}
         </span>
-        <span className="font-mono text-[10px] text-[#8c887b]">
+        <span className="font-mono text-[10px] text-[#475569]">
           {open ? "▴" : "▾"}
         </span>
       </button>
 
       {open ? (
-        <div className="border border-[#242426] bg-[#1a1918]">
+        <div className="border border-[#CBD2D9] bg-[#E8ECEE]">
           <input
             ref={searchRef}
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder="Search countries..."
             autoComplete="off"
-            className="h-10 w-full border-b border-[#242426] bg-[#0f0f10] px-3 text-sm text-[#f3efe6] outline-none placeholder:text-[#8c887b] focus:border-[#d4973b]"
+            className="h-10 w-full border-b border-[#CBD2D9] bg-[#E4E7EB] px-3 text-sm text-[#0F172A] outline-none placeholder:text-[#475569] focus:border-[#9A3412]"
           />
           <div className="max-h-56 overflow-y-auto py-1">
             <button
               type="button"
               onClick={() => select("")}
               className={cn(
-                "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-[#151516]",
-                value === "" ? "text-[#f3efe6]" : "text-[#8c887b]",
+                "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-[#F4F6F8]",
+                value === "" ? "text-[#0F172A]" : "text-[#475569]",
               )}
             >
               No country
@@ -454,18 +454,18 @@ function CountryCombobox({
                 type="button"
                 onClick={() => select(country.code)}
                 className={cn(
-                  "flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-[#151516]",
-                  country.code === value ? "bg-[#151516]" : null,
+                  "flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-[#F4F6F8]",
+                  country.code === value ? "bg-[#F4F6F8]" : null,
                 )}
               >
                 <CountryFlag code={country.code} className="h-[15px] w-5" />
-                <span className="truncate text-sm text-[#f3efe6]">
+                <span className="truncate text-sm text-[#0F172A]">
                   {country.name}
                 </span>
               </button>
             ))}
             {options.length === 0 ? (
-              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#475569]">
                 No countries found
               </p>
             ) : null}
@@ -538,7 +538,7 @@ function ClubPicker({
 
   return (
     <div ref={rootRef} className="flex flex-col gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-wider text-[#8c887b]">
+      <span className="font-mono text-[11px] uppercase tracking-wider text-[#475569]">
         Favorite Club
       </span>
 
@@ -554,8 +554,8 @@ function ClubPicker({
               className={cn(
                 "border px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:opacity-70",
                 active
-                  ? "border-[#d4973b] bg-[#1a1918] text-[#f3efe6]"
-                  : "border-[#242426] text-[#8c887b] hover:border-[#3d3b38] hover:text-[#f3efe6]",
+                  ? "border-[#9A3412] bg-[#E8ECEE] text-[#0F172A]"
+                  : "border-[#CBD2D9] text-[#475569] hover:border-[#94A3B8] hover:text-[#0F172A]",
               )}
             >
               {item.label}
@@ -565,15 +565,15 @@ function ClubPicker({
       </div>
 
       {selectedTeam ? (
-        <div className="flex items-center justify-between gap-3 border border-[#242426] bg-[#0f0f10] px-3 py-2">
+        <div className="flex items-center justify-between gap-3 border border-[#CBD2D9] bg-[#E4E7EB] px-3 py-2">
           <span className="flex min-w-0 items-center gap-2.5">
             <ClubCrest team={selectedTeam} size={20} />
             <span className="min-w-0">
-              <span className="block truncate text-sm text-[#f3efe6]">
+              <span className="block truncate text-sm text-[#0F172A]">
                 {selectedTeam.name}
               </span>
               {selectedTeam.leagueName ? (
-                <span className="block text-xs text-[#8c887b]">
+                <span className="block text-xs text-[#475569]">
                   {selectedTeam.leagueName}
                 </span>
               ) : null}
@@ -583,7 +583,7 @@ function ClubPicker({
             type="button"
             onClick={() => onSelect(null)}
             disabled={disabled}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-[#8c887b] hover:text-[#f3efe6] disabled:opacity-70"
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-[#475569] hover:text-[#0F172A] disabled:opacity-70"
           >
             Clear
           </button>
@@ -601,17 +601,17 @@ function ClubPicker({
           disabled={disabled}
           placeholder="Search clubs..."
           autoComplete="off"
-          className="h-10 w-full border border-[#242426] bg-[#0f0f10] px-3 text-sm text-[#f3efe6] outline-none placeholder:text-[#8c887b] focus:border-[#d4973b] disabled:opacity-70"
+          className="h-10 w-full border border-[#CBD2D9] bg-[#E4E7EB] px-3 text-sm text-[#0F172A] outline-none placeholder:text-[#475569] focus:border-[#9A3412] disabled:opacity-70"
         />
 
         {listOpen ? (
-          <div className="absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto border border-[#242426] bg-[#1a1918] py-1">
+          <div className="absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto border border-[#CBD2D9] bg-[#E8ECEE] py-1">
             {searching && results.length === 0 ? (
-              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#475569]">
                 Searching...
               </p>
             ) : results.length === 0 ? (
-              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#8c887b]">
+              <p className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[#475569]">
                 {emptyHint}
               </p>
             ) : (
@@ -624,15 +624,15 @@ function ClubPicker({
                     setQuery("");
                     setListOpen(false);
                   }}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[#151516]"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[#F4F6F8]"
                 >
                   <ClubCrest team={team} size={24} />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-[#f3efe6]">
+                    <span className="block truncate text-sm text-[#0F172A]">
                       {team.name}
                     </span>
                     {team.leagueName ? (
-                      <span className="block truncate text-xs text-[#8c887b]">
+                      <span className="block truncate text-xs text-[#475569]">
                         {team.leagueName}
                       </span>
                     ) : null}
@@ -668,7 +668,7 @@ function ClubCrest({
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center bg-[#151516] font-mono text-[9px] text-[#8c887b]",
+        "flex shrink-0 items-center justify-center bg-[#F4F6F8] font-mono text-[9px] text-[#475569]",
         px,
       )}
     >

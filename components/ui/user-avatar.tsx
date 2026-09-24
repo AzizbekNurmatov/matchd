@@ -60,7 +60,7 @@ export function UserAvatar({
           role="img"
           aria-label={username}
           className={cn(
-            "flex h-full w-full items-center justify-center rounded-md border border-[#2e2d2b] bg-[#1c1b1a] font-mono font-bold text-[#f3efe6]",
+            "flex h-full w-full items-center justify-center rounded-md border border-[#CBD2D9] bg-[#E8ECEE] font-mono font-bold text-[#0F172A]",
             INITIALS_TEXT[size],
           )}
         >

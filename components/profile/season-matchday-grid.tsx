@@ -16,11 +16,11 @@ const DAY_LABELS = ["Mon", "", "Wed", "", "Fri", "", ""] as const;
 
 const CELL_CLASS = {
   empty:
-    "bg-[#181819] border border-[#242426]/50 rounded-[2px]",
+    "bg-[#E4E7EB] border border-[#CBD2D9] rounded-[2px]",
   single:
-    "bg-[#d4973b]/40 border border-[#d4973b]/60 rounded-[2px]",
+    "bg-[#B45309]/25 border border-[#9A3412]/70 rounded-[2px]",
   multi:
-    "bg-[#d4973b] border border-[#f3efe6]/40 shadow-[0_0_8px_rgba(212,151,59,0.3)] rounded-[2px]",
+    "bg-[#9A3412] border border-[#F4F6F8] shadow-[0_0_8px_rgba(154,52,18,0.25)] rounded-[2px]",
 } as const;
 
 type TooltipState = {
@@ -86,7 +86,7 @@ export function SeasonMatchdayGrid({
 
   return (
     <section className="mt-10" aria-label="Season matchday log">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#8c887b]">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#475569]">
         SUPPORTER CAMPAIGN // MATCHDAY TIMELINE
       </p>
 
@@ -100,7 +100,7 @@ export function SeasonMatchdayGrid({
             {DAY_LABELS.map((label, index) => (
               <span
                 key={index}
-                className="text-[9px] font-mono leading-none text-[#8c887b]"
+                className="text-[9px] font-mono leading-none text-[#475569]"
                 style={{ height: MATCHDAY_CELL_PX, lineHeight: `${MATCHDAY_CELL_PX}px` }}
               >
                 {label}
@@ -120,7 +120,7 @@ export function SeasonMatchdayGrid({
               {grid.months.map((month) => (
                 <span
                   key={`${month.label}-${month.column}`}
-                  className="absolute top-0 text-[10px] font-mono uppercase tracking-wider text-[#8c887b]"
+                  className="absolute top-0 text-[10px] font-mono uppercase tracking-wider text-[#475569]"
                   style={{ left: month.column * (MATCHDAY_CELL_PX + MATCHDAY_GAP_PX) }}
                 >
                   {month.label}
@@ -165,7 +165,7 @@ export function SeasonMatchdayGrid({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] font-mono text-[#8c887b]">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] font-mono text-[#475569]">
         <span>Less</span>
         <span
           className={cn("inline-block", CELL_CLASS.empty)}
@@ -185,7 +185,7 @@ export function SeasonMatchdayGrid({
       {tooltip
         ? createPortal(
             <div
-              className="pointer-events-none fixed z-50 w-max max-w-[240px] rounded-sm border border-[#2e2d2b] bg-[#151516] p-2 text-xs shadow-xl"
+              className="pointer-events-none fixed z-50 w-max max-w-[240px] rounded-sm border border-[#CBD2D9] bg-[#F4F6F8] p-2 text-xs shadow-xl"
               style={{
                 left: tooltip.left,
                 top: tooltip.top,
@@ -195,21 +195,21 @@ export function SeasonMatchdayGrid({
               }}
             >
               {entries.length === 0 ? (
-                <p className="text-[#f3efe6]">
+                <p className="text-[#0F172A]">
                   {dateLabel} • No matches logged
                 </p>
               ) : (
                 <>
-                  <p className="font-mono uppercase tracking-wider text-[#8c887b]">
+                  <p className="font-mono uppercase tracking-wider text-[#475569]">
                     {dateLabel}
                   </p>
                   <ul className="mt-1.5 space-y-1.5">
                     {entries.map((entry) => (
                       <li key={entry.id}>
-                        <p className="leading-snug text-[#f3efe6]">
+                        <p className="leading-snug text-[#0F172A]">
                           {entry.homeTeam} {entry.score} {entry.awayTeam}
                         </p>
-                        <p className="mt-0.5 font-mono text-[#d4973b]">
+                        <p className="mt-0.5 font-mono text-[#9A3412]">
                           ★ {formatRating(entry.rating)}
                         </p>
                       </li>

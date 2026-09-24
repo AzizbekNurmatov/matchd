@@ -202,7 +202,7 @@ export default async function MatchPage({
 
   return (
     <Container className="py-12">
-      <section className="rounded-lg bg-[#161616] px-4 py-10 sm:px-8">
+      <section className="rounded-lg bg-[#F4F6F8] px-4 py-10 sm:px-8">
         <p className="text-center text-sm text-muted">
           {match.competition?.name ?? "Match"}
         </p>
@@ -217,7 +217,7 @@ export default async function MatchPage({
         <div className="mt-10 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
           <TeamBlock team={home} />
           <div className="px-2 text-center sm:px-4">
-            <p className="font-serif text-4xl tracking-tight text-[#f4f4f0] sm:text-5xl">
+            <p className="font-serif text-4xl tracking-tight text-[#0F172A] sm:text-5xl">
               {hasScore ? (
                 <>
                   {match.home_score}
@@ -240,7 +240,7 @@ export default async function MatchPage({
           </h2>
           {averageRating != null && ratingCount > 0 ? (
             <div className="mt-4 flex items-end gap-4">
-              <p className="font-serif text-6xl leading-none tracking-tight text-[#e4b42a]">
+              <p className="font-serif text-6xl leading-none tracking-tight text-[#B45309]">
                 {formatRating(averageRating)}
               </p>
               <div className="pb-1">
@@ -286,7 +286,7 @@ export default async function MatchPage({
             Reviews
           </h2>
           {reviews.length > 0 ? (
-            <p className="text-xs text-[#8e8e8e]">
+            <p className="text-xs text-[#475569]">
               {reviews.length === 1 ? "1 review" : `${reviews.length} reviews`}
             </p>
           ) : null}
@@ -299,10 +299,10 @@ export default async function MatchPage({
               existingBody={userReview?.body ?? null}
             />
           ) : (
-            <p className="text-sm text-[#8e8e8e]">
+            <p className="text-sm text-[#475569]">
               <Link
                 href="/login"
-                className="text-[#f4f4f0] underline decoration-border hover:decoration-[#e4b42a]"
+                className="text-[#0F172A] underline decoration-border hover:decoration-[#9A3412]"
               >
                 Log in
               </Link>{" "}
@@ -335,11 +335,11 @@ function TeamBlock({ team }: { team: TeamSummary | null }) {
           className="h-16 w-16 object-contain sm:h-20 sm:w-20"
         />
       ) : (
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#161616] font-serif text-xl text-muted sm:h-20 sm:w-20">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[#CBD2D9] bg-[#E4E7EB] font-serif text-xl text-muted sm:h-20 sm:w-20">
           {name.slice(0, 1)}
         </div>
       )}
-      <p className="mt-4 font-serif text-lg leading-tight tracking-tight text-[#f4f4f0] sm:text-2xl">
+      <p className="mt-4 font-serif text-lg leading-tight tracking-tight text-[#0F172A] sm:text-2xl">
         {name}
       </p>
       {team?.short_name && team.short_name !== team.name ? (

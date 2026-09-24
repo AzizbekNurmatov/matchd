@@ -14,7 +14,7 @@ export function ReviewList({
 }: ReviewListProps) {
   if (reviews.length === 0) {
     return (
-      <p className="text-sm text-[#8e8e8e]">
+      <p className="text-sm text-[#475569]">
         No reviews yet. Be the first to share your thoughts.
       </p>
     );

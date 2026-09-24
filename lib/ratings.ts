@@ -3,8 +3,8 @@ export const RATING_MAX = 5;
 export const RATING_STEP = 0.5;
 export const STAR_COUNT = 5;
 
-export const STAR_FILL = "#e4b42a";
-export const STAR_EMPTY = "#3a3834";
+export const STAR_FILL = "#9a3412";
+export const STAR_EMPTY = "#cbd2d9";
 
 export function isValidRating(value: number): boolean {
   if (value < RATING_MIN || value > RATING_MAX) {

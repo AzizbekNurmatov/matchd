@@ -11,7 +11,7 @@ type ProfileReviewsProps = {
 export function ProfileReviews({ username, reviews }: ProfileReviewsProps) {
   if (reviews.length === 0) {
     return (
-      <p className="text-sm text-[#8e8e8e]">
+      <p className="text-sm text-[#475569]">
         {username} hasn&apos;t written any reviews yet.
       </p>
     );
@@ -28,7 +28,7 @@ export function ProfileReviews({ username, reviews }: ProfileReviewsProps) {
         return (
           <li key={review.id} className="py-8 first:pt-0 last:pb-0">
             <article>
-              <p className="text-xs text-[#8e8e8e]">
+              <p className="text-xs text-[#475569]">
                 {review.match.competitionName ?? "Match"}
               </p>
               <div className="mt-3">
@@ -41,12 +41,12 @@ export function ProfileReviews({ username, reviews }: ProfileReviewsProps) {
                 {review.rating != null ? (
                   <StarDisplay value={review.rating} size={14} />
                 ) : null}
-                <p className="text-xs text-[#8e8e8e]">
+                <p className="text-xs text-[#475569]">
                   {formatRelativeTime(review.createdAt)}
                   {edited ? " · Edited" : null}
                 </p>
               </div>
-              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#f4f4f0]">
+              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#0F172A]">
                 {review.body}
               </p>
             </article>

@@ -36,7 +36,7 @@ export function ReviewCard({ review, matchId, isOwn }: ReviewCardProps) {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="shrink-0 text-sm text-[#8e8e8e] hover:text-[#f4f4f0]"
+              className="shrink-0 text-sm text-[#475569] hover:text-[#0F172A]"
             >
               Edit
             </button>
@@ -51,7 +51,7 @@ export function ReviewCard({ review, matchId, isOwn }: ReviewCardProps) {
             />
           </div>
         ) : (
-          <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#f3efe6]">
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#0F172A]">
             {review.body}
           </p>
         )}
@@ -76,7 +76,7 @@ function ReviewMeta({
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <Link
           href={`/users/${author.username}`}
-          className="font-medium text-[#f4f4f0] hover:text-[#e4b42a]"
+          className="font-medium text-[#0F172A] hover:text-[#B45309]"
         >
           {author.username}
         </Link>
@@ -86,7 +86,7 @@ function ReviewMeta({
           className="h-3 w-4 rounded-xs"
         />
         {author.favoriteTeam?.crest_url ? (
-          <span className="inline-flex items-center gap-1 border border-[#242426] bg-[#151516] px-1.5 py-0.5">
+          <span className="inline-flex items-center gap-1 border border-[#CBD2D9] bg-[#F4F6F8] px-1.5 py-0.5">
             <img
               src={author.favoriteTeam.crest_url}
               alt={clubName ? `${clubName} supporter` : "Favorite club"}
@@ -94,7 +94,7 @@ function ReviewMeta({
               className="h-3.5 w-3.5 object-contain"
             />
             {clubName ? (
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[#8c887b]">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#475569]">
                 {clubName}
               </span>
             ) : null}
@@ -104,7 +104,7 @@ function ReviewMeta({
           <StarDisplay value={review.rating} size={14} />
         ) : null}
       </div>
-      <p className="mt-0.5 font-mono text-xs text-[#8c887b]">
+      <p className="mt-0.5 font-mono text-xs text-[#475569]">
         {formatRelativeTime(review.createdAt)}
         {edited ? " · Edited" : null}
       </p>
