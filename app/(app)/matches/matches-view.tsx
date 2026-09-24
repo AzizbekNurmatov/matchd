@@ -243,7 +243,7 @@ function MatchTicket({ match }: { match: Match }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group flex flex-col justify-between rounded-none border border-[#CBD2D9] bg-[#F4F6F8] p-4 transition-all hover:border-[#94A3B8]"
+      className="group flex flex-col justify-between rounded-none border border-[#BAC2CB] bg-white p-4 shadow-card transition-all hover:border-[#94A3B8]"
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-wider text-[#475569]">
@@ -259,7 +259,7 @@ function MatchTicket({ match }: { match: Match }) {
         <TeamScoreRow team={match.away_team} score={awayScore} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[#CBD2D9] pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-[#E2E8F0] pt-3">
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-[#475569]">
           <span>{footerStatus(match)}</span>
           {finished && match.averageRating != null ? (
@@ -268,7 +268,7 @@ function MatchTicket({ match }: { match: Match }) {
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-xs uppercase tracking-wider text-[#9A3412] transition-colors group-hover:text-[#0F172A]">
+        <span className="font-mono text-xs uppercase tracking-wider text-[#B45309] transition-colors group-hover:text-[#0B132B]">
           {finished ? "Rate & Log →" : "Preview →"}
         </span>
       </div>
@@ -297,11 +297,11 @@ function TeamScoreRow({
             {(team?.name ?? "?").slice(0, 1)}
           </span>
         )}
-        <span className="truncate text-sm font-medium text-[#0F172A]">
+        <span className="truncate text-sm font-medium text-[#0B132B]">
           {team?.name ?? "TBD"}
         </span>
       </div>
-      <span className="shrink-0 font-mono text-xl font-bold text-[#0F172A]">
+      <span className="shrink-0 font-mono text-xl font-bold text-[#0B132B]">
         {score}
       </span>
     </div>

@@ -30,14 +30,14 @@ export default async function HomePage() {
 
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(154,52,18,0.08),rgba(228,231,235,0))]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(180,83,9,0.08),rgba(216,220,226,0))]" />
 
       <div className="relative mx-auto w-full max-w-4xl px-5 py-16 sm:py-20">
         <section>
           <p className="font-mono text-xs uppercase tracking-widest text-[#475569]">
             TRACK · RATE · LOG
           </p>
-          <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.15] tracking-tight text-[#0F172A] sm:text-5xl">
+          <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.15] tracking-tight text-[#0B132B] sm:text-5xl">
             The matches you watched,{" "}
             <span className="italic font-normal text-[#B45309]">remembered</span>{" "}
             together.
@@ -72,7 +72,7 @@ export default async function HomePage() {
               </h2>
               <Link
                 href="/matches"
-                className="text-xs text-[#9A3412] hover:underline"
+                className="text-xs text-[#B45309] hover:underline"
               >
                 All matches →
               </Link>
@@ -85,7 +85,7 @@ export default async function HomePage() {
           </section>
         ) : null}
 
-        <section className="mt-16 grid gap-px border border-[#CBD2D9] bg-[#CBD2D9] sm:grid-cols-3">
+        <section className="mt-16 grid gap-px border border-[#BAC2CB] bg-[#E2E8F0] shadow-card sm:grid-cols-3">
           <Pillar
             title="Log & Rate"
             body="Rate any fixture with 0.5 to 5.0 star precision."
@@ -106,8 +106,8 @@ export default async function HomePage() {
 
 function Pillar({ title, body }: { title: string; body: string }) {
   return (
-    <div className="bg-[#F4F6F8] px-5 py-6">
-      <h3 className="font-serif text-lg tracking-tight text-[#0F172A]">
+    <div className="bg-white px-5 py-6">
+      <h3 className="font-serif text-lg tracking-tight text-[#0B132B]">
         {title}
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-[#475569]">{body}</p>
@@ -125,7 +125,7 @@ function FeaturedMatchCard({ match }: { match: FeaturedMatch }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group flex min-w-[220px] flex-1 flex-col rounded-lg border border-[#CBD2D9] bg-[#F4F6F8] p-4 transition-colors hover:border-[#94A3B8] hover:bg-[#E8ECEE]"
+      className="group flex min-w-[220px] flex-1 flex-col rounded-lg border border-[#BAC2CB] bg-white p-4 shadow-card transition-colors hover:border-[#94A3B8]"
     >
       <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wider text-[#475569]">
         <span className="truncate">{match.competitionName ?? "Match"}</span>
@@ -135,7 +135,7 @@ function FeaturedMatchCard({ match }: { match: FeaturedMatch }) {
       <div className="flex flex-1 flex-col items-center justify-center py-8">
         <div className="flex items-center gap-4">
           <Crest team={match.homeTeam} />
-          <p className="font-serif text-2xl tracking-tight text-[#0F172A]">
+          <p className="font-serif text-2xl tracking-tight text-[#0B132B]">
             {hasScore ? (
               <>
                 {match.homeScore}
@@ -172,7 +172,7 @@ function Crest({ team }: { team: TeamSummary | null }) {
   }
 
   return (
-    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#CBD2D9] bg-[#E4E7EB] font-serif text-sm text-[#475569]">
+    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#BAC2CB] bg-[#D8DCE2] font-serif text-sm text-[#475569]">
       {teamLabel(team).slice(0, 1)}
     </span>
   );

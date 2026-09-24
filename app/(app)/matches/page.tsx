@@ -27,13 +27,13 @@ export default async function MatchesPage({
     await getCachedLeagueMatches(league);
 
   return (
-    <div className="bg-[#E4E7EB]">
+    <div className="bg-[#D8DCE2]">
       <Container className="py-12 sm:py-14">
         <header className="border-b border-[#CBD2D9] pb-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#475569]">
             Fixtures & Results // Archive
           </p>
-          <h1 className="mt-3 font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-[#0F172A] sm:text-5xl">
+          <h1 className="mt-3 font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-[#0B132B] sm:text-5xl">
             MATCHES
           </h1>
           <p className="mt-2 text-sm text-[#475569]">
