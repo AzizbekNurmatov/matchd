@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/sync-matches", // (or whatever your endpoint path is)
+      "path": "/api/cron/sync",
       "schedule": "0 6 * * *"
     }
   ]
