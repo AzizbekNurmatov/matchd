@@ -10,6 +10,7 @@ import type { MatchStatus } from "@/types/database";
 
 const MATCH_UPSERT_CHUNK = 100;
 const MS_PER_DAY = 86_400_000;
+const RECENT_SYNC_WINDOW_DAYS = 7;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -197,8 +198,12 @@ export async function syncRecentMatchesAllLeagues(): Promise<{
   competitions: SyncResult[];
 }> {
   const now = Date.now();
-  const dateFrom = new Date(now - 2 * MS_PER_DAY).toISOString().slice(0, 10);
-  const dateTo = new Date(now + 2 * MS_PER_DAY).toISOString().slice(0, 10);
+  const dateFrom = new Date(now - RECENT_SYNC_WINDOW_DAYS * MS_PER_DAY)
+    .toISOString()
+    .slice(0, 10);
+  const dateTo = new Date(now + RECENT_SYNC_WINDOW_DAYS * MS_PER_DAY)
+    .toISOString()
+    .slice(0, 10);
   const competitions: SyncResult[] = [];
 
   for (const [index, league] of SUPPORTED_LEAGUES.entries()) {
