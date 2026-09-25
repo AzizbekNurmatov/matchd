@@ -9,6 +9,7 @@ import {
   useTransition,
   type MouseEvent,
 } from "react";
+import { MatchCardHeader } from "@/components/matches/match-card-header";
 import { formatRating } from "@/lib/ratings";
 import type { CatalogMatch } from "@/lib/sports-data/catalog";
 import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
@@ -245,14 +246,11 @@ function MatchTicket({ match }: { match: Match }) {
       href={`/matches/${match.id}`}
       className="group flex flex-col justify-between rounded-none border border-[#BAC2CB] bg-white p-4 shadow-card transition-all hover:border-[#94A3B8]"
     >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[#475569]">
-          {match.competition?.name ?? "Match"}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[#475569]">
-          {formatCardDate(match.kickoff_at)}
-        </span>
-      </div>
+      <MatchCardHeader
+        league={match.competition?.name ?? null}
+        leagueCode={match.competition?.short_name ?? null}
+        kickoffAt={match.kickoff_at}
+      />
 
       <div className="flex flex-col gap-3 py-4">
         <TeamScoreRow team={match.home_team} score={homeScore} />
@@ -335,16 +333,6 @@ function emptyCopy(
     default:
       return `No completed matches found for ${leagueLabel}.`;
   }
-}
-
-function formatCardDate(iso: string): string {
-  return new Date(iso)
-    .toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-    .toUpperCase();
 }
 
 function formatKickoffTime(iso: string): string {

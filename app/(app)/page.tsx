@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MatchCardHeader } from "@/components/matches/match-card-header";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ type FeaturedMatch = {
   homeScore: number | null;
   awayScore: number | null;
   competitionName: string | null;
+  competitionCode: string | null;
   homeTeam: TeamSummary | null;
   awayTeam: TeamSummary | null;
 };
@@ -116,10 +118,6 @@ function Pillar({ title, body }: { title: string; body: string }) {
 }
 
 function FeaturedMatchCard({ match }: { match: FeaturedMatch }) {
-  const date = new Date(match.kickoffAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
   const hasScore = match.homeScore != null && match.awayScore != null;
 
   return (
@@ -127,10 +125,11 @@ function FeaturedMatchCard({ match }: { match: FeaturedMatch }) {
       href={`/matches/${match.id}`}
       className="group flex min-w-[220px] flex-1 flex-col rounded-lg border border-[#BAC2CB] bg-white p-4 shadow-card transition-colors hover:border-[#94A3B8]"
     >
-      <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wider text-[#475569]">
-        <span className="truncate">{match.competitionName ?? "Match"}</span>
-        <span className="shrink-0">{date}</span>
-      </div>
+      <MatchCardHeader
+        league={match.competitionName}
+        leagueCode={match.competitionCode}
+        kickoffAt={match.kickoffAt}
+      />
 
       <div className="flex flex-1 flex-col items-center justify-center py-8">
         <div className="flex items-center gap-4">
@@ -200,7 +199,7 @@ async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
       kickoff_at,
       home_score,
       away_score,
-      competition:competitions (name),
+      competition:competitions (name, short_name),
       home_team:teams!matches_home_team_id_fkey (name, short_name, crest_url),
       away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
     `,
@@ -223,6 +222,7 @@ async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
         homeScore: row.home_score,
         awayScore: row.away_score,
         competitionName: asSingle(row.competition)?.name ?? null,
+        competitionCode: asSingle(row.competition)?.short_name ?? null,
         homeTeam,
         awayTeam,
       },

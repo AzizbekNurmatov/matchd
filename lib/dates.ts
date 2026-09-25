@@ -28,6 +28,15 @@ export function formatRelativeTime(iso: string, now = Date.now()): string {
   }).format(date);
 }
 
+export function formatMatchCardDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
 export function formatMonthYear(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
