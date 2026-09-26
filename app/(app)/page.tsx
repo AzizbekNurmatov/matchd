@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MatchCardHeader } from "@/components/matches/match-card-header";
+import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -123,7 +124,7 @@ function FeaturedMatchCard({ match }: { match: FeaturedMatch }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group flex min-w-[220px] flex-1 flex-col rounded-lg border border-[#BAC2CB] bg-white p-4 shadow-card transition-colors hover:border-[#94A3B8]"
+      className="group flex w-max shrink-0 flex-col rounded-lg border border-[#BAC2CB] bg-white p-4 shadow-card transition-colors hover:border-[#94A3B8]"
     >
       <MatchCardHeader
         league={match.competitionName}
@@ -191,6 +192,7 @@ async function getIsLoggedIn() {
 
 async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
   const supabase = await createClient();
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("matches")
     .select(
@@ -199,13 +201,19 @@ async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
       kickoff_at,
       home_score,
       away_score,
-      competition:competitions (name, short_name),
+      competition:competitions!inner (name, short_name),
       home_team:teams!matches_home_team_id_fkey (name, short_name, crest_url),
       away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
     `,
     )
+    .eq("status", "finished")
+    .lte("kickoff_at", now)
+    .in(
+      "competition.short_name",
+      SUPPORTED_LEAGUES.map((league) => league.code),
+    )
     .order("kickoff_at", { ascending: false })
-    .limit(4);
+    .limit(8);
 
   if (error || !data) {
     return [];

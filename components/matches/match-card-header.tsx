@@ -37,9 +37,9 @@ export function MatchCardHeader({
   const name = league ?? "Match";
 
   return (
-    <div className="mb-2 flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+    <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
       <span
-        className={`inline-flex max-w-[58%] truncate rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#0F172A] ${leagueBadgeClass(name, leagueCode ?? null)}`}
+        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#0F172A] ${leagueBadgeClass(name, leagueCode ?? null)}`}
       >
         {name}
       </span>
