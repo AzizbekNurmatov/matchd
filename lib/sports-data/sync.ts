@@ -1,4 +1,7 @@
-import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
+import {
+  INTERNATIONAL_COMPETITIONS,
+  SUPPORTED_LEAGUES,
+} from "@/lib/sports-data/constants";
 import { footballDataProvider } from "@/lib/sports-data/providers/football-data";
 import type {
   CompetitionMatches,
@@ -206,11 +209,16 @@ export async function syncRecentMatchesAllLeagues(): Promise<{
     .slice(0, 10);
   const competitions: SyncResult[] = [];
 
-  for (const [index, league] of SUPPORTED_LEAGUES.entries()) {
+  const competitionsToSync = [
+    ...SUPPORTED_LEAGUES,
+    ...INTERNATIONAL_COMPETITIONS,
+  ];
+
+  for (const [index, league] of competitionsToSync.entries()) {
     competitions.push(
       await syncRecentMatches(league.code, dateFrom, dateTo),
     );
-    if (index < SUPPORTED_LEAGUES.length - 1) {
+    if (index < competitionsToSync.length - 1) {
       await wait(1500);
     }
   }

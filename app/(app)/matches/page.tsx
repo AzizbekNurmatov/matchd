@@ -5,14 +5,17 @@ import {
   isSupportedLeagueCode,
   type SupportedLeagueCode,
 } from "@/lib/sports-data/constants";
-import { getCachedLeagueMatches } from "@/lib/sports-data/queries";
+import {
+  getCachedInternationalWindowMatches,
+  getCachedLeagueMatches,
+} from "@/lib/sports-data/queries";
 import { MatchesView } from "./matches-view";
 
 export const metadata: Metadata = {
   title: "Matches",
 };
 
-type CatalogTab = "recent" | "upcoming" | "all";
+type CatalogTab = "recent" | "upcoming" | "all" | "international";
 type CatalogLeague = "all" | SupportedLeagueCode;
 
 export default async function MatchesPage({
@@ -23,8 +26,12 @@ export default async function MatchesPage({
   const params = await searchParams;
   const tab = parseTab(params?.tab || "recent");
   const league = parseLeague(params?.league || "all");
-  const { recentMatches, upcomingMatches } =
-    await getCachedLeagueMatches(league);
+  const [{ recentMatches, upcomingMatches }, internationalMatches] =
+    await Promise.all([
+      getCachedLeagueMatches(league),
+      getCachedInternationalWindowMatches(),
+    ]);
+  const showInternational = internationalMatches.length > 0;
 
   return (
     <div className="bg-[#D8DCE2]">
@@ -43,9 +50,12 @@ export default async function MatchesPage({
 
         <MatchesView
           initialLeague={league}
-          initialTab={tab}
+          initialTab={
+            tab === "international" && !showInternational ? "recent" : tab
+          }
           recentMatches={recentMatches}
           upcomingMatches={upcomingMatches}
+          internationalMatches={showInternational ? internationalMatches : []}
           supportedLeagues={SUPPORTED_LEAGUES}
         />
       </Container>
@@ -54,7 +64,7 @@ export default async function MatchesPage({
 }
 
 function parseTab(value?: string): CatalogTab {
-  if (value === "upcoming" || value === "all") {
+  if (value === "upcoming" || value === "all" || value === "international") {
     return value;
   }
   return "recent";

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MatchCardHeader } from "@/components/matches/match-card-header";
-import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
+import { featuredCompetitionCodes } from "@/lib/sports-data/constants";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -206,12 +206,9 @@ async function getFeaturedMatches(): Promise<FeaturedMatch[]> {
       away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
     `,
     )
-    .eq("status", "finished")
+    .in("status", ["finished", "live"])
     .lte("kickoff_at", now)
-    .in(
-      "competition.short_name",
-      SUPPORTED_LEAGUES.map((league) => league.code),
-    )
+    .in("competition.short_name", featuredCompetitionCodes())
     .order("kickoff_at", { ascending: false })
     .limit(8);
 

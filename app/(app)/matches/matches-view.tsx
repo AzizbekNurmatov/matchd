@@ -23,13 +23,14 @@ const TABS = [
   { id: "all", label: "All Fixtures" },
 ] as const;
 
-type CatalogTab = (typeof TABS)[number]["id"];
+type CatalogTab = (typeof TABS)[number]["id"] | "international";
 
 type MatchesViewProps = {
   initialLeague: string;
   initialTab?: CatalogTab;
   recentMatches: Match[];
   upcomingMatches: Match[];
+  internationalMatches?: Match[];
   supportedLeagues: typeof SUPPORTED_LEAGUES;
 };
 
@@ -38,6 +39,7 @@ export function MatchesView({
   initialTab = "recent",
   recentMatches,
   upcomingMatches,
+  internationalMatches = [],
   supportedLeagues,
 }: MatchesViewProps) {
   const router = useRouter();
@@ -55,7 +57,12 @@ export function MatchesView({
     [supportedLeagues],
   );
 
+  const showInternational = internationalMatches.length > 0;
+
   const matches = useMemo(() => {
+    if (activeTab === "international") {
+      return internationalMatches;
+    }
     if (activeTab === "recent") {
       return recentMatches;
     }
@@ -66,11 +73,15 @@ export function MatchesView({
       (a, b) =>
         new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
     );
-  }, [activeTab, recentMatches, upcomingMatches]);
+  }, [activeTab, internationalMatches, recentMatches, upcomingMatches]);
 
   function selectTab(nextTab: CatalogTab) {
     setActiveTab(nextTab);
-    window.history.replaceState(null, "", matchesHref(nextTab, initialLeague));
+    const href =
+      nextTab === "international"
+        ? "/matches?tab=international"
+        : matchesHref(nextTab, initialLeague);
+    window.history.replaceState(null, "", href);
   }
 
   function onLeagueClick(
@@ -91,7 +102,7 @@ export function MatchesView({
     <>
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <nav
-          className="flex gap-6 border-b border-[#CBD2D9]"
+          className="flex flex-wrap gap-x-6 gap-y-2 border-b border-[#CBD2D9]"
           aria-label="Match filters"
         >
           {TABS.map((item) => {
@@ -110,11 +121,27 @@ export function MatchesView({
                 )}
               >
                 {item.label}
-              </button>
-            );
-          })}
+            </button>
+          );
+        })}
+          {showInternational ? (
+            <button
+              type="button"
+              onClick={() => selectTab("international")}
+              aria-current={activeTab === "international" ? "page" : undefined}
+              className={cn(
+                "cursor-pointer pb-2 font-mono text-xs uppercase tracking-wider",
+                activeTab === "international"
+                  ? "border-b-2 border-[#9A3412] text-[#0F172A]"
+                  : "text-[#475569] hover:text-[#0F172A]",
+              )}
+            >
+              International Fixtures
+            </button>
+          ) : null}
         </nav>
 
+        {activeTab === "international" ? null : (
         <LeagueDropdown
           tab={activeTab}
           league={initialLeague}
@@ -126,6 +153,7 @@ export function MatchesView({
             }
           }}
         />
+        )}
       </div>
 
       {matches.length === 0 ? (
@@ -326,6 +354,8 @@ function emptyCopy(
       : (supportedLeagues.find((item) => item.code === league)?.name ?? league);
 
   switch (tab) {
+    case "international":
+      return "No international fixtures in the current window.";
     case "upcoming":
       return `No upcoming fixtures scheduled for ${leagueLabel}.`;
     case "all":

@@ -15,6 +15,18 @@ const LEAGUE_BADGES: { test: RegExp; className: string }[] = [
     test: /\b(cl|champions league)\b/i,
     className: "border-[#4338CA] bg-[#A5B4FC]",
   },
+  {
+    test: /\b(wc|fifa world cup|world cup)\b/i,
+    className: "border-[#047857] bg-[#6EE7B7]",
+  },
+  {
+    test: /\b(ec|european championship|euro)\b/i,
+    className: "border-[#1D4ED8] bg-[#93C5FD]",
+  },
+  {
+    test: /\b(nations league)\b/i,
+    className: "border-[#0F766E] bg-[#5EEAD4]",
+  },
 ];
 
 function leagueBadgeClass(name: string, code: string | null) {

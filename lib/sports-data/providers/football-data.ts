@@ -15,6 +15,7 @@ type FootballDataTeam = {
   shortName?: string | null;
   tla?: string | null;
   crest?: string | null;
+  area?: { name?: string | null } | null;
 };
 
 type FootballDataCompetition = {
@@ -82,6 +83,7 @@ function normalizeTeam(team: FootballDataTeam): ExternalTeam {
     name: team.name,
     shortName: team.shortName ?? team.tla ?? undefined,
     crestUrl: team.crest ?? undefined,
+    country: team.area?.name ?? undefined,
   };
 }
 

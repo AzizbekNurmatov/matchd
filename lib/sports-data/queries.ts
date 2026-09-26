@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { toRatingNumber } from "@/lib/ratings";
 import type { CatalogMatch, CatalogTab } from "@/lib/sports-data/catalog";
+import { INTERNATIONAL_COMPETITIONS } from "@/lib/sports-data/constants";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 import type { Database, MatchStatus } from "@/types/database";
 
@@ -23,6 +24,8 @@ const MATCH_SELECT = `
 `;
 
 const UPCOMING_STATUSES: MatchStatus[] = ["scheduled", "live"];
+const INTERNATIONAL_WINDOW_DAYS = 7;
+const MS_PER_DAY = 86_400_000;
 
 function createPublicClient() {
   return createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
@@ -134,6 +137,57 @@ export async function getCachedCatalogMatches(
   return unstable_cache(
     async () => fetchCatalogMatches(leagueCode, tab, page),
     ["matches-catalog", leagueCode, tab, page.toString()],
+    { revalidate: 300, tags: ["matches"] },
+  )();
+}
+
+async function fetchInternationalWindowMatches(): Promise<CatalogMatch[]> {
+  const supabase = createPublicClient();
+  const now = Date.now();
+  const from = new Date(now - INTERNATIONAL_WINDOW_DAYS * MS_PER_DAY).toISOString();
+  const to = new Date(now + INTERNATIONAL_WINDOW_DAYS * MS_PER_DAY).toISOString();
+
+  const { data, error } = await supabase
+    .from("matches")
+    .select(MATCH_SELECT)
+    .in(
+      "competition.short_name",
+      INTERNATIONAL_COMPETITIONS.map((competition) => competition.code),
+    )
+    .gte("kickoff_at", from)
+    .lte("kickoff_at", to)
+    .order("kickoff_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching international window matches:", error);
+    return [];
+  }
+
+  const rows = data ?? [];
+  const ratingByMatch = await loadRatings(
+    supabase,
+    rows.map((row) => row.id),
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    kickoff_at: row.kickoff_at,
+    status: row.status,
+    home_score: row.home_score,
+    away_score: row.away_score,
+    competition: asSingle(row.competition),
+    home_team: asSingle(row.home_team),
+    away_team: asSingle(row.away_team),
+    averageRating: ratingByMatch.get(row.id) ?? null,
+  }));
+}
+
+export async function getCachedInternationalWindowMatches(): Promise<
+  CatalogMatch[]
+> {
+  return unstable_cache(
+    async () => fetchInternationalWindowMatches(),
+    ["matches-international-window"],
     { revalidate: 300, tags: ["matches"] },
   )();
 }

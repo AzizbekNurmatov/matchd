@@ -9,8 +9,35 @@ export const SUPPORTED_LEAGUES = [
 
 export type SupportedLeagueCode = (typeof SUPPORTED_LEAGUES)[number]["code"];
 
+/**
+ * National-team competitions on the current Football-Data plan.
+ * UEFA Nations League is not included in that plan, so it is not synced.
+ */
+export const INTERNATIONAL_COMPETITIONS = [
+  { code: "WC", name: "FIFA World Cup", country: "World" },
+  { code: "EC", name: "European Championship", country: "Europe" },
+] as const;
+
+export type InternationalCompetitionCode =
+  (typeof INTERNATIONAL_COMPETITIONS)[number]["code"];
+
 export function isSupportedLeagueCode(
   value: string,
 ): value is SupportedLeagueCode {
   return SUPPORTED_LEAGUES.some((league) => league.code === value);
+}
+
+export function isInternationalCompetitionCode(
+  value: string,
+): value is InternationalCompetitionCode {
+  return INTERNATIONAL_COMPETITIONS.some(
+    (competition) => competition.code === value,
+  );
+}
+
+export function featuredCompetitionCodes(): string[] {
+  return [
+    ...SUPPORTED_LEAGUES.map((league) => league.code),
+    ...INTERNATIONAL_COMPETITIONS.map((competition) => competition.code),
+  ];
 }
