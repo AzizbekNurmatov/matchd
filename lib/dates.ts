@@ -37,6 +37,16 @@ export function formatMatchCardDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+export function formatUtcEventDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(iso));
+}
+
 export function formatMonthYear(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",

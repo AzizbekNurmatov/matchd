@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { UfcEventCard } from "@/components/ufc/ufc-event-card";
 import { UfcEventDiscussion } from "@/components/ufc/ufc-event-discussion";
+import { UfcEventSelector } from "@/components/ufc/ufc-event-selector";
 import { createClient } from "@/lib/supabase/server";
 import { getUfcEventReviews, listUfcEvents } from "@/lib/ufc/queries";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Fights",
@@ -45,30 +44,14 @@ export default async function FightsPage({
           <p className="mt-8 text-sm text-[#475569]">No UFC cards yet.</p>
         ) : (
           <>
-            <div
-              className="mt-8 flex gap-2 overflow-x-auto pb-1"
-              aria-label="UFC cards"
-            >
-              {events.map((event) => {
-                const active = event.id === selected.id;
-                return (
-                  <Link
-                    key={event.id}
-                    href={`/fights?event=${event.id}`}
-                    scroll={false}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wider",
-                      active
-                        ? "border-[#DC2626] bg-[#FEE2E2] text-[#991B1B]"
-                        : "border-[#BAC2CB] bg-white text-[#475569] hover:text-[#0B132B]",
-                    )}
-                  >
-                    {eventPillLabel(event.name)}
-                  </Link>
-                );
-              })}
-            </div>
+            <UfcEventSelector
+              events={events.map((event) => ({
+                id: event.id,
+                name: event.name,
+                startsAt: event.startsAt,
+              }))}
+              selectedId={selected.id}
+            />
             <div className="mt-6">
               <UfcEventCard
                 event={selected}
@@ -88,13 +71,4 @@ export default async function FightsPage({
       </Container>
     </div>
   );
-}
-
-function eventPillLabel(name: string) {
-  const numbered = name.match(/ufc\s+\d+/i);
-  if (numbered) {
-    return numbered[0].replace(/\s+/, " ").toUpperCase();
-  }
-  const head = name.split(":")[0]?.trim();
-  return head || name;
 }

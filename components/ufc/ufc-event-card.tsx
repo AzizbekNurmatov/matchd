@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { FighterAvatar } from "@/components/ufc/fighter-avatar";
 import { UfcFightStars } from "@/components/ufc/ufc-fight-stars";
-import { formatMatchCardDate } from "@/lib/dates";
+import { formatUtcEventDate } from "@/lib/dates";
 import { formatFightResult } from "@/lib/ufc/format";
 import type { UfcEventCardData, UfcFightCard } from "@/lib/ufc/queries";
 
@@ -30,7 +30,7 @@ export function UfcEventCard({
           dateTime={event.startsAt}
           className="shrink-0 text-xs font-semibold tabular-nums text-slate-700"
         >
-          {formatMatchCardDate(event.startsAt)}
+          {formatUtcEventDate(event.startsAt)}
         </time>
       </header>
 
