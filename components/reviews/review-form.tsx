@@ -12,16 +12,24 @@ import {
 } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
+type ReviewActionResult = { ok: true } | { ok: false; error: string };
+
 type ReviewFormProps = {
   matchId: string;
   existingBody?: string | null;
   onCancel?: () => void;
+  placeholder?: string;
+  onSave?: (body: string) => Promise<ReviewActionResult>;
+  onDelete?: () => Promise<ReviewActionResult>;
 };
 
 export function ReviewForm({
   matchId,
   existingBody = null,
   onCancel,
+  placeholder = "What did you make of this match?",
+  onSave,
+  onDelete,
 }: ReviewFormProps) {
   const router = useRouter();
   const [body, setBody] = useState(existingBody ?? "");
@@ -50,7 +58,7 @@ export function ReviewForm({
     setError(null);
     setPendingAction("save");
     startTransition(async () => {
-      const result = await upsertReview(matchId, body);
+      const result = onSave ? await onSave(body) : await upsertReview(matchId, body);
       setPendingAction(null);
       if (!result.ok) {
         setError(result.error);
@@ -74,7 +82,9 @@ export function ReviewForm({
     setError(null);
     setPendingAction("delete");
     startTransition(async () => {
-      const result = await deleteReview(matchId);
+      const result = onDelete
+        ? await onDelete()
+        : await deleteReview(matchId);
       setPendingAction(null);
       if (!result.ok) {
         setError(result.error);
@@ -118,7 +128,7 @@ export function ReviewForm({
         maxLength={REVIEW_MAX_LENGTH}
         disabled={isPending}
         rows={6}
-        placeholder="What did you make of this match?"
+        placeholder={placeholder}
         className={cn(
           "w-full resize-y rounded-md border border-border bg-[#F4F6F8] px-3 py-3 text-sm leading-relaxed text-[#0F172A]",
           "outline-none placeholder:text-[#475569] focus:border-[#9A3412]",

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FighterAvatar } from "@/components/ufc/fighter-avatar";
 import { UfcFightStars } from "@/components/ufc/ufc-fight-stars";
 import { formatMatchCardDate } from "@/lib/dates";
 import { formatFightResult } from "@/lib/ufc/format";
@@ -110,17 +111,7 @@ function Fighter({
 }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          className="h-8 w-8 shrink-0 rounded-full bg-[#E2E8F0] object-cover"
-        />
-      ) : (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E2E8F0] text-[11px] font-semibold text-[#475569]">
-          {name.slice(0, 1)}
-        </span>
-      )}
+      <FighterAvatar name={name} imageUrl={imageUrl} />
       <span
         className={
           emphasis === "winner"

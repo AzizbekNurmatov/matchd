@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isValidRating } from "@/lib/ratings";
+import {
+  normalizeReviewContent,
+  validateReviewContent,
+} from "@/lib/reviews";
 
 export type RateUfcFightResult =
   | { ok: true }
@@ -56,6 +60,105 @@ export async function rateUfcFight(
   }
 
   revalidatePath("/");
+  revalidatePath("/fights");
+  revalidatePath(`/ufc/${eventId}`);
+  return { ok: true };
+}
+
+export async function upsertUfcReview(
+  fightId: string,
+  eventId: string,
+  content: string,
+): Promise<RateUfcFightResult> {
+  const errorMessage = validateReviewContent(content);
+  if (errorMessage) {
+    return { ok: false, error: errorMessage };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Log in to write a review." };
+  }
+
+  const review = normalizeReviewContent(content);
+  const { data: existing, error: lookupError } = await supabase
+    .from("ufc_fight_ratings")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("fight_id", fightId)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { ok: false, error: lookupError.message };
+  }
+
+  const { error } = existing
+    ? await supabase
+        .from("ufc_fight_ratings")
+        .update({ review })
+        .eq("id", existing.id)
+    : await supabase.from("ufc_fight_ratings").insert({
+        user_id: user.id,
+        fight_id: fightId,
+        review,
+      });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/fights");
+  revalidatePath(`/ufc/${eventId}`);
+  return { ok: true };
+}
+
+export async function deleteUfcReview(
+  fightId: string,
+  eventId: string,
+): Promise<RateUfcFightResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Log in to delete a review." };
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from("ufc_fight_ratings")
+    .select("id, rating")
+    .eq("user_id", user.id)
+    .eq("fight_id", fightId)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { ok: false, error: lookupError.message };
+  }
+
+  if (!existing) {
+    return { ok: true };
+  }
+
+  const { error } =
+    existing.rating == null
+      ? await supabase.from("ufc_fight_ratings").delete().eq("id", existing.id)
+      : await supabase
+          .from("ufc_fight_ratings")
+          .update({ review: null })
+          .eq("id", existing.id);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/fights");
   revalidatePath(`/ufc/${eventId}`);
   return { ok: true };
 }

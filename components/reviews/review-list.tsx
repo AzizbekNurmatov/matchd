@@ -1,16 +1,22 @@
 import { ReviewCard } from "@/components/reviews/review-card";
 import type { ReviewItem } from "@/components/reviews/types";
 
+type ReviewActionResult = { ok: true } | { ok: false; error: string };
+
 type ReviewListProps = {
   reviews: ReviewItem[];
   matchId: string;
   currentUserId: string | null;
+  onSave?: (body: string) => Promise<ReviewActionResult>;
+  onDelete?: () => Promise<ReviewActionResult>;
 };
 
 export function ReviewList({
   reviews,
   matchId,
   currentUserId,
+  onSave,
+  onDelete,
 }: ReviewListProps) {
   if (reviews.length === 0) {
     return (
@@ -28,6 +34,8 @@ export function ReviewList({
             review={review}
             matchId={matchId}
             isOwn={review.userId === currentUserId}
+            onSave={onSave}
+            onDelete={onDelete}
           />
         </li>
       ))}

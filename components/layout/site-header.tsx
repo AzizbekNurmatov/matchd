@@ -44,6 +44,9 @@ export async function SiteHeader() {
           <Link href="/matches" className="hover:text-foreground">
             Matches
           </Link>
+          <Link href="/fights" className="hover:text-foreground">
+            Fights
+          </Link>
           {username ? (
             <>
               <Link

@@ -12,6 +12,7 @@ import type {
   ProfileRatingItem,
   ProfileReviewItem,
   ProfileTeam,
+  ProfileUfcRating,
 } from "@/components/profile/types";
 import { buildMatchdayActivity } from "@/lib/queries/profile";
 import { formatRating, toRatingNumber } from "@/lib/ratings";
@@ -87,9 +88,31 @@ const loadProfilePage = cache(async (username: string) => {
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
-  const [ratingsResult, reviewsResult] = await Promise.all([
+  const ufcRatingsQuery = supabase
+    .from("ufc_fight_ratings")
+    .select(
+      `
+      id,
+      rating,
+      created_at,
+      ufc_fights (
+        fighter_a_name,
+        fighter_b_name,
+        winner_id,
+        method,
+        details,
+        ufc_events (id, title)
+      )
+    `,
+    )
+    .eq("user_id", profile.id)
+    .not("rating", "is", null)
+    .order("created_at", { ascending: false });
+
+  const [ratingsResult, reviewsResult, ufcRatingsResult] = await Promise.all([
     ratingsQuery,
     reviewsQuery,
+    ufcRatingsQuery,
   ]);
 
   const ratings: ProfileRatingItem[] = [];
@@ -129,11 +152,13 @@ const loadProfilePage = cache(async (username: string) => {
     });
   }
 
-  const ratingSum = ratings.reduce((sum, item) => sum + item.rating, 0);
+  const ufcRatings = parseUfcRatings(ufcRatingsResult.data ?? []);
+  const ratedCount = ratings.length + ufcRatings.length;
+  const ratingSum =
+    ratings.reduce((sum, item) => sum + item.rating, 0) +
+    ufcRatings.reduce((sum, item) => sum + item.rating, 0);
   const averageRating =
-    ratings.length > 0
-      ? Number(formatRating(ratingSum / ratings.length))
-      : null;
+    ratedCount > 0 ? Number(formatRating(ratingSum / ratedCount)) : null;
 
   return {
     profile: {
@@ -142,17 +167,64 @@ const loadProfilePage = cache(async (username: string) => {
       createdAt: profile.created_at,
       countryCode: profile.country_code,
       favoriteTeam: asSingle(profile.favorite_team),
-      matchesRated: ratings.length,
+      matchesRated: ratedCount,
       reviewsWritten: reviews.length,
       averageRating,
     },
     ratings,
+    ufcRatings,
     reviews,
     matchdays: buildMatchdayActivity(ratings),
     seasonGrid: buildSeasonGrid(new Date()),
     isOwn: user?.id === profile.id,
   };
 });
+
+function parseUfcRatings(rows: unknown[]): ProfileUfcRating[] {
+  const ratings: ProfileUfcRating[] = [];
+
+  for (const row of rows) {
+    if (!row || typeof row !== "object") {
+      continue;
+    }
+    const record = row as {
+      id?: string;
+      rating?: number | string | null;
+      created_at?: string;
+      ufc_fights?: unknown;
+    };
+    const rating = toRatingNumber(record.rating);
+    const fight = asSingle(
+      record.ufc_fights as {
+        fighter_a_name: string;
+        fighter_b_name: string;
+        winner_id: string | null;
+        method: string | null;
+        details: string | null;
+        ufc_events: { id: string; title: string } | { id: string; title: string }[] | null;
+      } | null,
+    );
+    const event = fight ? asSingle(fight.ufc_events) : null;
+    if (!record.id || !record.created_at || rating == null || !fight || !event) {
+      continue;
+    }
+
+    ratings.push({
+      id: record.id,
+      rating,
+      createdAt: record.created_at,
+      eventId: event.id,
+      eventName: event.title,
+      fighterAName: fight.fighter_a_name,
+      fighterBName: fight.fighter_b_name,
+      winnerName: fight.winner_id,
+      method: fight.method,
+      details: fight.details,
+    });
+  }
+
+  return ratings;
+}
 
 function asSingle<T>(value: T | T[] | null | undefined): T | null {
   if (!value) {
@@ -210,10 +282,10 @@ export default async function UserProfilePage({
   searchParams,
 }: {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; sport?: string }>;
 }) {
   const { username } = await params;
-  const { tab: tabParam } = await searchParams;
+  const { tab: tabParam, sport: sportParam } = await searchParams;
   const data = await loadProfilePage(username);
 
   if (!data) {
@@ -221,6 +293,8 @@ export default async function UserProfilePage({
   }
 
   const tab = tabParam === "reviews" ? "reviews" : "ratings";
+  const sport =
+    sportParam === "football" || sportParam === "ufc" ? sportParam : "all";
   const profilePath = `/users/${data.profile.username}`;
 
   return (
@@ -236,7 +310,7 @@ export default async function UserProfilePage({
         <TabLink
           href={profilePath}
           active={tab === "ratings"}
-          count={data.ratings.length}
+          count={data.ratings.length + data.ufcRatings.length}
         >
           Ratings
         </TabLink>
@@ -259,6 +333,9 @@ export default async function UserProfilePage({
           <ProfileRatings
             username={data.profile.username}
             ratings={data.ratings}
+            ufcRatings={data.ufcRatings}
+            sport={sport}
+            profilePath={profilePath}
           />
         )}
       </div>

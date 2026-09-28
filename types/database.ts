@@ -373,7 +373,15 @@ export type Database = {
           review?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fight_ratings_fight_id_fkey";
+            columns: ["fight_id"];
+            isOneToOne: false;
+            referencedRelation: "ufc_fights";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {

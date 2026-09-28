@@ -10,13 +10,23 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/dates";
 import { getCountryName } from "@/lib/utils/countries";
 
+type ReviewActionResult = { ok: true } | { ok: false; error: string };
+
 type ReviewCardProps = {
   review: ReviewItem;
   matchId: string;
   isOwn: boolean;
+  onSave?: (body: string) => Promise<ReviewActionResult>;
+  onDelete?: () => Promise<ReviewActionResult>;
 };
 
-export function ReviewCard({ review, matchId, isOwn }: ReviewCardProps) {
+export function ReviewCard({
+  review,
+  matchId,
+  isOwn,
+  onSave,
+  onDelete,
+}: ReviewCardProps) {
   const [editing, setEditing] = useState(false);
   const edited =
     new Date(review.updatedAt).getTime() - new Date(review.createdAt).getTime() >
@@ -48,6 +58,13 @@ export function ReviewCard({ review, matchId, isOwn }: ReviewCardProps) {
               matchId={matchId}
               existingBody={review.body}
               onCancel={() => setEditing(false)}
+              placeholder={
+                onSave
+                  ? "What did you make of this fight?"
+                  : "What did you make of this match?"
+              }
+              onSave={onSave}
+              onDelete={onDelete}
             />
           </div>
         ) : (

@@ -28,3 +28,16 @@ export function formatFightResult(
 
   return label;
 }
+
+export function formatCompactFightResult(
+  method: string | null,
+  details: string | null,
+): string | null {
+  const full = formatFightResult(method, details);
+  if (!full || full === "DEC" || full === "DRAW") {
+    return full;
+  }
+  const round = details?.match(/R\d+/i)?.[0]?.toUpperCase();
+  const label = full.split(" ")[0] ?? full;
+  return round ? `${label} ${round}` : label;
+}

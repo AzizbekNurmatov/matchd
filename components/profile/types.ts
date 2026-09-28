@@ -21,6 +21,19 @@ export type ProfileRatingItem = {
   match: ProfileMatchSummary;
 };
 
+export type ProfileUfcRating = {
+  id: string;
+  rating: number;
+  createdAt: string;
+  eventId: string;
+  eventName: string;
+  fighterAName: string;
+  fighterBName: string;
+  winnerName: string | null;
+  method: string | null;
+  details: string | null;
+};
+
 export type ProfileReviewItem = {
   id: string;
   body: string;

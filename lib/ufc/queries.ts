@@ -1,3 +1,4 @@
+import type { ReviewItem } from "@/components/reviews/types";
 import { toRatingNumber } from "@/lib/ratings";
 import { createClient } from "@/lib/supabase/server";
 
@@ -164,4 +165,117 @@ async function loadUserRatings(
   }
 
   return ratings;
+}
+
+export async function listUfcEvents(): Promise<UfcEventCardData[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ufc_events")
+    .select("*, ufc_fights(*)")
+    .order("date", { ascending: false })
+    .order("order_index", { ascending: false, foreignTable: "ufc_fights" });
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error listing UFC events:", error.message);
+    }
+    return [];
+  }
+
+  const fightIds = data.flatMap((event) =>
+    (event.ufc_fights ?? []).map((fight) => fight.id),
+  );
+  const ratings = await loadUserRatings(supabase, fightIds);
+
+  return data.map((event) => {
+    const fights = [...(event.ufc_fights ?? [])].sort(
+      (a, b) => b.order_index - a.order_index,
+    );
+    return {
+      id: event.id,
+      name: event.title,
+      startsAt: event.date,
+      status: event.status ?? "UPCOMING",
+      fights: fights.map((fight) => toFightCard(fight, ratings)),
+    };
+  });
+}
+
+export type UfcBoutReview = ReviewItem & { fightId: string };
+
+export async function getUfcEventReviews(
+  fightIds: string[],
+): Promise<UfcBoutReview[]> {
+  if (fightIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ufc_fight_ratings")
+    .select("id, fight_id, user_id, rating, review, created_at")
+    .in("fight_id", fightIds)
+    .not("review", "is", null)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error fetching UFC reviews:", error.message);
+    }
+    return [];
+  }
+
+  const userIds = [
+    ...new Set(data.map((row) => row.user_id).filter((id): id is string => Boolean(id))),
+  ];
+  const authors = new Map<
+    string,
+    ReviewItem["author"] & { id: string }
+  >();
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select(
+        "id, username, avatar_url, country_code, favorite_team:teams!profiles_favorite_team_id_fkey(short_name, crest_url)",
+      )
+      .in("id", userIds);
+
+    for (const profile of profiles ?? []) {
+      const team = Array.isArray(profile.favorite_team)
+        ? profile.favorite_team[0]
+        : profile.favorite_team;
+      authors.set(profile.id, {
+        id: profile.id,
+        username: profile.username,
+        avatarUrl: profile.avatar_url,
+        countryCode: profile.country_code,
+        favoriteTeam: team
+          ? { crest_url: team.crest_url, short_name: team.short_name }
+          : null,
+      });
+    }
+  }
+
+  return data.flatMap((row) => {
+    if (!row.fight_id || !row.user_id || !row.review) {
+      return [];
+    }
+    const author = authors.get(row.user_id);
+    if (!author) {
+      return [];
+    }
+    return [
+      {
+        id: row.id,
+        fightId: row.fight_id,
+        userId: row.user_id,
+        author,
+        body: row.review,
+        createdAt: row.created_at,
+        updatedAt: row.created_at,
+        rating: toRatingNumber(row.rating),
+      },
+    ];
+  });
 }
