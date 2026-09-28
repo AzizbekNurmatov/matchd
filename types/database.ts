@@ -338,7 +338,15 @@ export type Database = {
           details?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fights_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "ufc_events";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       ufc_fight_ratings: {
         Row: {

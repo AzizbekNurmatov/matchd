@@ -3,7 +3,7 @@ import Link from "next/link";
 import { MatchCardHeader } from "@/components/matches/match-card-header";
 import { UfcEventCard } from "@/components/ufc/ufc-event-card";
 import { featuredCompetitionCodes } from "@/lib/sports-data/constants";
-import { getFightWeekEvent } from "@/lib/ufc/queries";
+import { getLatestUfcEvent } from "@/lib/ufc/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -28,10 +28,10 @@ type FeaturedMatch = {
 };
 
 export default async function HomePage() {
-  const [matches, isLoggedIn, fightWeek] = await Promise.all([
+  const [matches, isLoggedIn, ufcEvent] = await Promise.all([
     getFeaturedMatches(),
     getIsLoggedIn(),
-    getFightWeekEvent(),
+    getLatestUfcEvent(),
   ]);
 
   return (
@@ -70,9 +70,9 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {fightWeek ? (
+        {ufcEvent ? (
           <section className="mt-16">
-            <UfcEventCard event={fightWeek} />
+            <UfcEventCard event={ufcEvent} />
           </section>
         ) : null}
 
