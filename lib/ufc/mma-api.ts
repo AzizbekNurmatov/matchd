@@ -23,6 +23,7 @@ export type MmaFight = {
 export type MmaFightResult = {
   id?: number;
   fight?: { id?: number | null } | null;
+  fighters?: MmaFight["fighters"];
   method?: string | null;
   won_type?: string | null;
   round?: number | null;

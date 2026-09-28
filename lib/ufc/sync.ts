@@ -1,16 +1,16 @@
 import {
   fetchFightResultsByDate,
   fetchFightsByDate,
-  fetchSeasonFights,
   type MmaFight,
   type MmaFightResult,
 } from "@/lib/ufc/mma-api";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const MS_PER_DAY = 86_400_000;
-const LOOKBACK_DAYS = 10;
-const LOOKAHEAD_DAYS = 14;
 const MAIN_CARD_SIZE = 5;
+// Free MMA plans only return a 3-day window. Sunday 07:00 UTC must include
+// Saturday (yesterday) and Sunday (today), plus tomorrow for the next card.
+const FREE_WINDOW_OFFSETS = [-1, 0, 1] as const;
 
 export type UfcSyncResult = {
   eventsUpserted: number;
@@ -97,8 +97,18 @@ function eventId(slug: string, startsAt: string): string {
   return `${base}-${day}`;
 }
 
-function dateKey(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+function utcDateKey(now: number, offsetDays: number): string {
+  const current = new Date(now);
+  const midnight = Date.UTC(
+    current.getUTCFullYear(),
+    current.getUTCMonth(),
+    current.getUTCDate(),
+  );
+  return new Date(midnight + offsetDays * MS_PER_DAY).toISOString().slice(0, 10);
+}
+
+function freeApiDates(now: number): string[] {
+  return FREE_WINDOW_OFFSETS.map((offset) => utcDateKey(now, offset));
 }
 
 function resultForFight(results: MmaFightResult[], fightId: number) {
@@ -133,38 +143,33 @@ function resultTime(result: MmaFightResult | undefined): string | null {
 }
 
 async function loadFights(now: number): Promise<MmaFight[]> {
-  const season = new Date(now).getUTCFullYear();
-  const from = now - LOOKBACK_DAYS * MS_PER_DAY;
-  const to = now + LOOKAHEAD_DAYS * MS_PER_DAY;
-
-  let fights: MmaFight[] = [];
-  try {
-    fights = await fetchSeasonFights(season);
-  } catch (error) {
-    console.error("MMA season query failed, falling back to dates:", error);
-  }
-
-  const inWindow = fights.filter((fight) => {
-    if (!fight.date || !isUfcEvent(fight.slug)) {
-      return false;
-    }
-    const time = new Date(fight.date).getTime();
-    return time >= from && time <= to;
-  });
-
-  if (inWindow.length > 0) {
-    return inWindow;
-  }
-
   const dated: MmaFight[] = [];
-  for (let cursor = from; cursor <= to; cursor += MS_PER_DAY) {
-    const date = new Date(cursor).toISOString().slice(0, 10);
-    const day = await fetchFightsByDate(date);
-    dated.push(
-      ...day.filter((fight) => fight.date && isUfcEvent(fight.slug)),
-    );
+  for (const date of freeApiDates(now)) {
+    try {
+      const day = await fetchFightsByDate(date);
+      dated.push(
+        ...day.filter((fight) => fight.date && isUfcEvent(fight.slug)),
+      );
+    } catch (error) {
+      console.error(`MMA fights query failed for ${date}:`, error);
+    }
   }
   return dated;
+}
+
+function fightWithOutcome(
+  fight: MmaFight,
+  result: MmaFightResult | undefined,
+): MmaFight {
+  if (!result || (!resultMethod(result) && resultRound(result) == null)) {
+    return fight;
+  }
+
+  return {
+    ...fight,
+    status: { short: "FT", long: "Finished" },
+    fighters: result.fighters ?? fight.fighters,
+  };
 }
 
 export async function syncRecentUfcEvents(
@@ -183,13 +188,7 @@ export async function syncRecentUfcEvents(
     byEvent.set(key, group);
   }
 
-  const dates = [
-    ...new Set(
-      fights
-        .filter((fight) => fight.date && mapStatus(fight.status) === "FINISHED")
-        .map((fight) => dateKey(fight.date!)),
-    ),
-  ];
+  const dates = freeApiDates(now).slice(0, 2);
   const results: MmaFightResult[] = [];
   for (const date of dates) {
     results.push(...(await fetchFightResultsByDate(date)));
@@ -200,10 +199,12 @@ export async function syncRecentUfcEvents(
   let fightsUpserted = 0;
 
   for (const [slug, eventFights] of byEvent) {
-    const card = mainCard(eventFights).filter(
-      (fight) =>
-        fight.fighters?.first?.name && fight.fighters?.second?.name,
-    );
+    const card = mainCard(eventFights)
+      .map((fight) => fightWithOutcome(fight, resultForFight(results, fight.id)))
+      .filter(
+        (fight) =>
+          fight.fighters?.first?.name && fight.fighters?.second?.name,
+      );
     if (card.length === 0) {
       continue;
     }
