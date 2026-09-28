@@ -1,3 +1,22 @@
+export function resolveFightWinner(
+  winnerId: string | null,
+  fighterA: string,
+  fighterB: string,
+): { winner: string; opponent: string } | null {
+  if (!winnerId) {
+    return null;
+  }
+
+  const token = winnerId.trim().toLowerCase();
+  if (token === "a" || token === fighterA.trim().toLowerCase()) {
+    return { winner: fighterA, opponent: fighterB };
+  }
+  if (token === "b" || token === fighterB.trim().toLowerCase()) {
+    return { winner: fighterB, opponent: fighterA };
+  }
+  return null;
+}
+
 export function formatFightResult(
   method: string | null,
   details: string | null,
@@ -11,7 +30,8 @@ export function formatFightResult(
     return "DRAW";
   }
   if (normalized.includes("dec")) {
-    return "DEC";
+    const kind = method?.match(/\(([^)]+)\)/)?.[1]?.trim();
+    return kind ? `DEC - ${kind}` : "DEC";
   }
 
   const label = normalized.includes("sub")
@@ -34,7 +54,7 @@ export function formatCompactFightResult(
   details: string | null,
 ): string | null {
   const full = formatFightResult(method, details);
-  if (!full || full === "DEC" || full === "DRAW") {
+  if (!full || full === "DRAW" || full.startsWith("DEC")) {
     return full;
   }
   const round = details?.match(/R\d+/i)?.[0]?.toUpperCase();

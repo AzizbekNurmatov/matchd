@@ -3,7 +3,7 @@ import { MatchStrip } from "@/components/profile/match-strip";
 import type { ProfileRatingItem, ProfileUfcRating } from "@/components/profile/types";
 import { StarDisplay } from "@/components/ratings/star-display";
 import { formatRelativeTime } from "@/lib/dates";
-import { formatCompactFightResult } from "@/lib/ufc/format";
+import { formatCompactFightResult, resolveFightWinner } from "@/lib/ufc/format";
 import { formatRating } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
 
@@ -93,13 +93,14 @@ function SportLink({
 }
 
 function UfcRatingCard({ item }: { item: ProfileUfcRating }) {
-  const winner = item.winnerName;
-  const line =
-    winner === item.fighterAName
-      ? `${item.fighterAName} def. ${item.fighterBName}`
-      : winner === item.fighterBName
-        ? `${item.fighterBName} def. ${item.fighterAName}`
-        : `${item.fighterAName} vs ${item.fighterBName}`;
+  const outcome = resolveFightWinner(
+    item.winnerName,
+    item.fighterAName,
+    item.fighterBName,
+  );
+  const line = outcome
+    ? `${outcome.winner} def. ${outcome.opponent}`
+    : `${item.fighterAName} vs ${item.fighterBName}`;
   const result = formatCompactFightResult(item.method, item.details);
 
   return (

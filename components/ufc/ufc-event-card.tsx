@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { UfcFightStars } from "@/components/ufc/ufc-fight-stars";
 import { formatUtcEventDate } from "@/lib/dates";
-import { formatFightResult } from "@/lib/ufc/format";
+import { formatFightResult, resolveFightWinner } from "@/lib/ufc/format";
 import type { UfcEventCardData, UfcFightCard } from "@/lib/ufc/queries";
 
 export function UfcEventCard({
@@ -56,18 +56,11 @@ export function UfcEventCard({
 
 function BoutRow({ eventId, fight }: { eventId: string; fight: UfcFightCard }) {
   const result = formatFightResult(fight.method, fight.details);
-  const winner =
-    fight.winnerName === fight.fighterAName
-      ? fight.fighterAName
-      : fight.winnerName === fight.fighterBName
-        ? fight.fighterBName
-        : null;
-  const opponent =
-    winner === fight.fighterAName
-      ? fight.fighterBName
-      : winner === fight.fighterBName
-        ? fight.fighterAName
-        : null;
+  const outcome = resolveFightWinner(
+    fight.winnerName,
+    fight.fighterAName,
+    fight.fighterBName,
+  );
 
   return (
     <li className="border-b border-slate-100 py-2.5 last:border-b-0">
@@ -77,22 +70,23 @@ function BoutRow({ eventId, fight }: { eventId: string; fight: UfcFightCard }) {
       <div className="mt-1 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm">
-            {winner && opponent ? (
+            {outcome ? (
               <>
-                <span className="font-semibold text-slate-900">{winner}</span>
-                <span className="mx-1.5 text-xs font-medium text-slate-500">
-                  def.
+                <span className="mr-1.5 rounded-sm border border-emerald-200/80 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  W
                 </span>
-                <span className="font-medium text-slate-700">{opponent}</span>
+                <span className="font-bold text-slate-900">{outcome.winner}</span>
+                <span className="px-2 text-xs font-normal text-slate-300">vs</span>
+                <span className="font-normal text-slate-400">
+                  {outcome.opponent}
+                </span>
               </>
             ) : (
               <>
                 <span className="font-medium text-slate-700">
                   {fight.fighterAName}
                 </span>
-                <span className="mx-1.5 text-xs font-medium text-slate-500">
-                  vs
-                </span>
+                <span className="px-2 text-xs font-normal text-slate-300">vs</span>
                 <span className="font-medium text-slate-700">
                   {fight.fighterBName}
                 </span>
@@ -100,7 +94,7 @@ function BoutRow({ eventId, fight }: { eventId: string; fight: UfcFightCard }) {
             )}
           </p>
           {result ? (
-            <p className="mt-1 text-xs font-medium text-amber-700">{result}</p>
+            <p className="mt-1 text-xs font-semibold text-amber-700">{result}</p>
           ) : null}
         </div>
         <UfcFightStars
