@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { FighterAvatar } from "@/components/ufc/fighter-avatar";
 import { UfcFightStars } from "@/components/ufc/ufc-fight-stars";
 import { formatUtcEventDate } from "@/lib/dates";
 import { formatFightResult } from "@/lib/ufc/format";
@@ -57,31 +56,51 @@ export function UfcEventCard({
 
 function BoutRow({ eventId, fight }: { eventId: string; fight: UfcFightCard }) {
   const result = formatFightResult(fight.method, fight.details);
+  const winner =
+    fight.winnerName === fight.fighterAName
+      ? fight.fighterAName
+      : fight.winnerName === fight.fighterBName
+        ? fight.fighterBName
+        : null;
+  const opponent =
+    winner === fight.fighterAName
+      ? fight.fighterBName
+      : winner === fight.fighterBName
+        ? fight.fighterAName
+        : null;
 
   return (
-    <li className="border-b border-slate-100 py-3 last:border-b-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#475569]">
+    <li className="border-b border-slate-100 py-2.5 last:border-b-0">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
         {fight.weightClass ?? "Catchweight"}
       </p>
-      <div className="mt-2 flex items-center justify-between gap-3">
+      <div className="mt-1 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Fighter
-              name={fight.fighterAName}
-              imageUrl={fight.fighterAImageUrl}
-              emphasis={fighterEmphasis(fight.winnerName, fight.fighterAName)}
-            />
-            <span className="text-xs text-[#475569]">vs</span>
-            <Fighter
-              name={fight.fighterBName}
-              imageUrl={fight.fighterBImageUrl}
-              emphasis={fighterEmphasis(fight.winnerName, fight.fighterBName)}
-            />
-          </div>
+          <p className="text-sm">
+            {winner && opponent ? (
+              <>
+                <span className="font-semibold text-slate-900">{winner}</span>
+                <span className="mx-1.5 text-xs font-medium text-slate-500">
+                  def.
+                </span>
+                <span className="font-medium text-slate-700">{opponent}</span>
+              </>
+            ) : (
+              <>
+                <span className="font-medium text-slate-700">
+                  {fight.fighterAName}
+                </span>
+                <span className="mx-1.5 text-xs font-medium text-slate-500">
+                  vs
+                </span>
+                <span className="font-medium text-slate-700">
+                  {fight.fighterBName}
+                </span>
+              </>
+            )}
+          </p>
           {result ? (
-            <p className="mt-1 text-[11px] font-semibold tracking-wide text-[#991B1B]">
-              {result}
-            </p>
+            <p className="mt-1 text-xs font-medium text-amber-700">{result}</p>
           ) : null}
         </div>
         <UfcFightStars
@@ -91,42 +110,5 @@ function BoutRow({ eventId, fight }: { eventId: string; fight: UfcFightCard }) {
         />
       </div>
     </li>
-  );
-}
-
-function fighterEmphasis(
-  winnerName: string | null,
-  fighterName: string,
-): "winner" | "loser" | "even" {
-  if (!winnerName) {
-    return "even";
-  }
-  return winnerName === fighterName ? "winner" : "loser";
-}
-
-function Fighter({
-  name,
-  imageUrl,
-  emphasis,
-}: {
-  name: string;
-  imageUrl: string | null;
-  emphasis: "winner" | "loser" | "even";
-}) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-2">
-      <FighterAvatar name={name} imageUrl={imageUrl} />
-      <span
-        className={
-          emphasis === "winner"
-            ? "truncate text-sm font-semibold text-[#0B132B]"
-            : emphasis === "loser"
-              ? "truncate text-sm text-[#94A3B8]"
-              : "truncate text-sm text-[#0B132B]"
-        }
-      >
-        {name}
-      </span>
-    </span>
   );
 }
