@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MatchCardHeader } from "@/components/matches/match-card-header";
+import { UfcEventCard } from "@/components/ufc/ufc-event-card";
 import { featuredCompetitionCodes } from "@/lib/sports-data/constants";
+import { getFightWeekEvent } from "@/lib/ufc/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -26,9 +28,10 @@ type FeaturedMatch = {
 };
 
 export default async function HomePage() {
-  const [matches, isLoggedIn] = await Promise.all([
+  const [matches, isLoggedIn, fightWeek] = await Promise.all([
     getFeaturedMatches(),
     getIsLoggedIn(),
+    getFightWeekEvent(),
   ]);
 
   return (
@@ -66,6 +69,12 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+
+        {fightWeek ? (
+          <section className="mt-16">
+            <UfcEventCard event={fightWeek} />
+          </section>
+        ) : null}
 
         {matches.length > 0 ? (
           <section className="mt-16">

@@ -268,6 +268,105 @@ export type Database = {
           },
         ];
       };
+      ufc_events: {
+        Row: {
+          id: string;
+          title: string;
+          date: string;
+          venue: string | null;
+          status: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          title: string;
+          date: string;
+          venue?: string | null;
+          status?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          date?: string;
+          venue?: string | null;
+          status?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ufc_fights: {
+        Row: {
+          id: string;
+          event_id: string | null;
+          order_index: number;
+          weight_class: string;
+          fighter_a_name: string;
+          fighter_a_image: string | null;
+          fighter_b_name: string;
+          fighter_b_image: string | null;
+          winner_id: string | null;
+          method: string | null;
+          details: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          event_id?: string | null;
+          order_index: number;
+          weight_class: string;
+          fighter_a_name: string;
+          fighter_a_image?: string | null;
+          fighter_b_name: string;
+          fighter_b_image?: string | null;
+          winner_id?: string | null;
+          method?: string | null;
+          details?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string | null;
+          order_index?: number;
+          weight_class?: string;
+          fighter_a_name?: string;
+          fighter_a_image?: string | null;
+          fighter_b_name?: string;
+          fighter_b_image?: string | null;
+          winner_id?: string | null;
+          method?: string | null;
+          details?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ufc_fight_ratings: {
+        Row: {
+          id: string;
+          fight_id: string | null;
+          user_id: string | null;
+          rating: number | null;
+          review: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          fight_id?: string | null;
+          user_id?: string | null;
+          rating?: number | null;
+          review?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          fight_id?: string | null;
+          user_id?: string | null;
+          rating?: number | null;
+          review?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       match_rating_stats: {
