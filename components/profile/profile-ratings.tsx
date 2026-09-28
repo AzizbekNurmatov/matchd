@@ -104,7 +104,7 @@ function UfcRatingCard({ item }: { item: ProfileUfcRating }) {
 
   return (
     <Link
-      href={`/ufc/${item.eventId}`}
+      href={`/fights?event=${item.eventId}`}
       className="group flex h-full flex-col rounded-lg border border-border bg-white p-4 shadow-card transition-colors hover:border-[#94A3B8]"
     >
       <div className="flex items-center justify-between gap-3">

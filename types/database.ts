@@ -352,6 +352,7 @@ export type Database = {
         Row: {
           id: string;
           fight_id: string | null;
+          event_id: string | null;
           user_id: string | null;
           rating: number | null;
           review: string | null;
@@ -360,6 +361,7 @@ export type Database = {
         Insert: {
           id?: string;
           fight_id?: string | null;
+          event_id?: string | null;
           user_id?: string | null;
           rating?: number | null;
           review?: string | null;
@@ -368,6 +370,7 @@ export type Database = {
         Update: {
           id?: string;
           fight_id?: string | null;
+          event_id?: string | null;
           user_id?: string | null;
           rating?: number | null;
           review?: string | null;

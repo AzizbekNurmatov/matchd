@@ -66,7 +66,6 @@ export async function rateUfcFight(
 }
 
 export async function upsertUfcReview(
-  fightId: string,
   eventId: string,
   content: string,
 ): Promise<RateUfcFightResult> {
@@ -89,7 +88,8 @@ export async function upsertUfcReview(
     .from("ufc_fight_ratings")
     .select("id")
     .eq("user_id", user.id)
-    .eq("fight_id", fightId)
+    .eq("event_id", eventId)
+    .is("fight_id", null)
     .maybeSingle();
 
   if (lookupError) {
@@ -103,7 +103,7 @@ export async function upsertUfcReview(
         .eq("id", existing.id)
     : await supabase.from("ufc_fight_ratings").insert({
         user_id: user.id,
-        fight_id: fightId,
+        event_id: eventId,
         review,
       });
 
@@ -118,7 +118,6 @@ export async function upsertUfcReview(
 }
 
 export async function deleteUfcReview(
-  fightId: string,
   eventId: string,
 ): Promise<RateUfcFightResult> {
   const supabase = await createClient();
@@ -134,7 +133,8 @@ export async function deleteUfcReview(
     .from("ufc_fight_ratings")
     .select("id, rating")
     .eq("user_id", user.id)
-    .eq("fight_id", fightId)
+    .eq("event_id", eventId)
+    .is("fight_id", null)
     .maybeSingle();
 
   if (lookupError) {

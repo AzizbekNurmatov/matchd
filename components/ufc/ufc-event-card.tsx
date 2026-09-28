@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { FighterAvatar } from "@/components/ufc/fighter-avatar";
 import { UfcFightStars } from "@/components/ufc/ufc-fight-stars";
@@ -8,9 +9,11 @@ import type { UfcEventCardData, UfcFightCard } from "@/lib/ufc/queries";
 export function UfcEventCard({
   event,
   showDetailsLink = true,
+  discussion,
 }: {
   event: UfcEventCardData;
   showDetailsLink?: boolean;
+  discussion?: ReactNode;
 }) {
   return (
     <article className="rounded-lg border border-[#BAC2CB] bg-white p-4 shadow-card sm:p-5">
@@ -37,10 +40,11 @@ export function UfcEventCard({
         ))}
       </ol>
 
+      {discussion}
       {showDetailsLink ? (
         <footer className="pt-3">
           <Link
-            href={`/ufc/${event.id}`}
+            href={`/fights?event=${event.id}`}
             className="text-xs text-[#B45309] hover:underline"
           >
             View full card details & fan reviews →

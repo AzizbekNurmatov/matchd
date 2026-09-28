@@ -201,20 +201,13 @@ export async function listUfcEvents(): Promise<UfcEventCardData[]> {
   });
 }
 
-export type UfcBoutReview = ReviewItem & { fightId: string };
-
-export async function getUfcEventReviews(
-  fightIds: string[],
-): Promise<UfcBoutReview[]> {
-  if (fightIds.length === 0) {
-    return [];
-  }
-
+export async function getUfcEventReviews(eventId: string): Promise<ReviewItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("ufc_fight_ratings")
-    .select("id, fight_id, user_id, rating, review, created_at")
-    .in("fight_id", fightIds)
+    .select("id, event_id, user_id, rating, review, created_at")
+    .eq("event_id", eventId)
+    .is("fight_id", null)
     .not("review", "is", null)
     .order("created_at", { ascending: false });
 
@@ -258,7 +251,7 @@ export async function getUfcEventReviews(
   }
 
   return data.flatMap((row) => {
-    if (!row.fight_id || !row.user_id || !row.review) {
+    if (!row.user_id || !row.review) {
       return [];
     }
     const author = authors.get(row.user_id);
@@ -268,7 +261,6 @@ export async function getUfcEventReviews(
     return [
       {
         id: row.id,
-        fightId: row.fight_id,
         userId: row.user_id,
         author,
         body: row.review,
