@@ -21,6 +21,7 @@ export type UfcEventCardData = {
   name: string;
   startsAt: string;
   status: string;
+  venue: string | null;
   fights: UfcFightCard[];
 };
 
@@ -54,6 +55,7 @@ export async function getLatestUfcEvent(): Promise<UfcEventCardData | null> {
     name: ufcEvent.title,
     startsAt: ufcEvent.date,
     status: ufcEvent.status ?? "UPCOMING",
+    venue: ufcEvent.venue,
     fights: fights.map((fight) => toFightCard(fight, ratings)),
   };
 }
@@ -66,7 +68,7 @@ async function loadEventCard(eventId: string): Promise<UfcEventCardData | null> 
   const supabase = await createClient();
   const { data: event, error } = await supabase
     .from("ufc_events")
-    .select("id, title, date, status")
+    .select("id, title, date, status, venue")
     .eq("id", eventId)
     .maybeSingle();
 
@@ -102,6 +104,7 @@ async function loadEventCard(eventId: string): Promise<UfcEventCardData | null> 
     name: event.title,
     startsAt: event.date,
     status: event.status ?? "UPCOMING",
+    venue: event.venue,
     fights: fights.map((fight) => toFightCard(fight, ratings)),
   };
 }
@@ -196,6 +199,7 @@ export async function listUfcEvents(): Promise<UfcEventCardData[]> {
       name: event.title,
       startsAt: event.date,
       status: event.status ?? "UPCOMING",
+      venue: event.venue,
       fights: fights.map((fight) => toFightCard(fight, ratings)),
     };
   });
