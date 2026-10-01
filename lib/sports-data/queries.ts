@@ -198,15 +198,22 @@ export async function getCachedInternationalWindowMatches(): Promise<
 }
 
 export async function getCachedLeagueMatches(league: string): Promise<{
-  recentMatches: CatalogMatch[];
-  upcomingMatches: CatalogMatch[];
-  allMatches: CatalogMatch[];
+  matches: CatalogMatch[];
 }> {
-  const [recentMatches, upcomingMatches, allMatches] = await Promise.all([
+  const [recentMatches, upcomingMatches] = await Promise.all([
     getCachedCatalogMatches(league, "recent", 1),
     getCachedCatalogMatches(league, "upcoming", 1),
-    getCachedCatalogMatches(league, "all", 1),
   ]);
 
-  return { recentMatches, upcomingMatches, allMatches };
+  const byId = new Map<string, CatalogMatch>();
+  for (const match of [...recentMatches, ...upcomingMatches]) {
+    byId.set(match.id, match);
+  }
+
+  return {
+    matches: [...byId.values()].sort(
+      (a, b) =>
+        new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
+    ),
+  };
 }

@@ -29,9 +29,7 @@ type CatalogTab = (typeof TABS)[number]["id"] | "international";
 type MatchesViewProps = {
   initialLeague: string;
   initialTab?: CatalogTab;
-  recentMatches: Match[];
-  upcomingMatches: Match[];
-  allMatches?: Match[];
+  matches: Match[];
   internationalMatches?: Match[];
   supportedLeagues: typeof SUPPORTED_LEAGUES;
 };
@@ -39,9 +37,7 @@ type MatchesViewProps = {
 export function MatchesView({
   initialLeague,
   initialTab = "recent",
-  recentMatches,
-  upcomingMatches,
-  allMatches = [],
+  matches,
   internationalMatches = [],
   supportedLeagues,
 }: MatchesViewProps) {
@@ -66,21 +62,12 @@ export function MatchesView({
 
   const showInternational = internationalMatches.length > 0;
 
-  const matches = useMemo(() => {
+  const visibleMatches = useMemo(() => {
     if (activeTab === "international") {
       return internationalMatches;
     }
-    if (activeTab === "recent") {
-      return recentMatches;
-    }
-    if (activeTab === "upcoming") {
-      return upcomingMatches;
-    }
-    return [...allMatches].sort(
-      (a, b) =>
-        new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
-    );
-  }, [activeTab, allMatches, internationalMatches, recentMatches, upcomingMatches]);
+    return filterLeagueMatches(matches, activeTab);
+  }, [activeTab, internationalMatches, matches]);
 
   function selectTab(nextTab: CatalogTab) {
     setActiveTab(nextTab);
@@ -154,16 +141,12 @@ export function MatchesView({
           league={initialLeague}
           leagues={leagues}
           onLeagueClick={onLeagueClick}
-          onOpen={() => {
-            for (const item of leagues) {
-              router.prefetch(matchesHref(activeTab, item.id));
-            }
-          }}
+          onOpen={() => {}}
         />
         )}
       </div>
 
-      {matches.length === 0 ? (
+      {visibleMatches.length === 0 ? (
         <div
           className={cn(
             "mt-8 border border-[#CBD2D9] bg-[#F4F6F8] px-5 py-12 transition-opacity",
@@ -181,7 +164,7 @@ export function MatchesView({
             isPending && "opacity-70",
           )}
         >
-          {matches.map((match) => (
+          {visibleMatches.map((match) => (
             <MatchTicket key={match.id} match={match} />
           ))}
         </div>
@@ -339,6 +322,40 @@ function TeamScoreRow({
       </span>
     </div>
   );
+}
+
+function filterLeagueMatches(matches: Match[], tab: CatalogTab) {
+  const now = Date.now();
+  if (tab === "all" || tab === "international") {
+    return [...matches].sort(
+      (a, b) =>
+        new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
+    );
+  }
+
+  if (tab === "upcoming") {
+    return matches
+      .filter(
+        (match) =>
+          match.status.toLowerCase() !== "finished" &&
+          new Date(match.kickoff_at).getTime() > now,
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
+      );
+  }
+
+  return matches
+    .filter(
+      (match) =>
+        match.status.toLowerCase() === "finished" ||
+        new Date(match.kickoff_at).getTime() <= now,
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
+    );
 }
 
 function matchesHref(tab: CatalogTab, league: string): string {

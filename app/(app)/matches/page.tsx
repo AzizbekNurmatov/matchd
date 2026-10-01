@@ -26,11 +26,10 @@ export default async function MatchesPage({
   const params = await searchParams;
   const tab = parseTab(params?.tab || "recent");
   const league = parseLeague(params?.league || "all");
-  const [{ recentMatches, upcomingMatches, allMatches }, internationalMatches] =
-    await Promise.all([
-      getCachedLeagueMatches(league),
-      getCachedInternationalWindowMatches(),
-    ]);
+  const [{ matches }, internationalMatches] = await Promise.all([
+    getCachedLeagueMatches(league),
+    getCachedInternationalWindowMatches(),
+  ]);
   const showInternational = internationalMatches.length > 0;
 
   return (
@@ -53,9 +52,7 @@ export default async function MatchesPage({
           initialTab={
             tab === "international" && !showInternational ? "recent" : tab
           }
-          recentMatches={recentMatches}
-          upcomingMatches={upcomingMatches}
-          allMatches={allMatches}
+          matches={matches}
           internationalMatches={showInternational ? internationalMatches : []}
           supportedLeagues={SUPPORTED_LEAGUES}
         />
