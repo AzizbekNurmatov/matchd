@@ -6,11 +6,11 @@ import { toRatingNumber } from "@/lib/ratings";
 import type { CatalogMatch, CatalogTab } from "@/lib/sports-data/catalog";
 import { INTERNATIONAL_COMPETITIONS } from "@/lib/sports-data/constants";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
-import type { Database, MatchStatus } from "@/types/database";
+import type { Database } from "@/types/database";
 
 export type { CatalogMatch, CatalogTab } from "@/lib/sports-data/catalog";
 
-export const CATALOG_PAGE_SIZE = 18;
+export const CATALOG_PAGE_SIZE = 20;
 
 const MATCH_SELECT = `
   id,
@@ -23,7 +23,6 @@ const MATCH_SELECT = `
   away_team:teams!matches_away_team_id_fkey (name, short_name, crest_url)
 `;
 
-const UPCOMING_STATUSES: MatchStatus[] = ["scheduled", "live"];
 const INTERNATIONAL_WINDOW_DAYS = 7;
 const MS_PER_DAY = 86_400_000;
 
@@ -80,8 +79,9 @@ async function fetchCatalogMatches(
   page: number,
 ): Promise<CatalogMatch[]> {
   const supabase = createPublicClient();
+  const now = new Date().toISOString();
   const from = (page - 1) * CATALOG_PAGE_SIZE;
-  const to = page * CATALOG_PAGE_SIZE - 1;
+  const to = from + CATALOG_PAGE_SIZE - 1;
 
   let query = supabase.from("matches").select(MATCH_SELECT);
 
@@ -89,21 +89,26 @@ async function fetchCatalogMatches(
     query = query.eq("competition.short_name", leagueCode);
   }
 
-  // Recent = finished, newest first. Upcoming uses our DB statuses:
-  // Football-Data TIMED/SCHEDULED map to `scheduled`, IN_PLAY maps to `live`.
+  // Stored statuses are the mapped values: finished, scheduled, live.
+  // Football-Data FT/FINISHED and API-Sports FT become `finished`.
+  // TIMED/SCHEDULED/NS become `scheduled`.
   if (tab === "recent") {
-    query = query.eq("status", "finished").order("kickoff_at", {
-      ascending: false,
-    });
+    query = query
+      .eq("status", "finished")
+      .lte("kickoff_at", now)
+      .order("kickoff_at", { ascending: false })
+      .range(from, to);
   } else if (tab === "upcoming") {
     query = query
-      .in("status", UPCOMING_STATUSES)
-      .order("kickoff_at", { ascending: true });
+      .eq("status", "scheduled")
+      .gt("kickoff_at", now)
+      .order("kickoff_at", { ascending: true })
+      .range(from, to);
   } else {
-    query = query.order("kickoff_at", { ascending: true });
+    query = query.order("kickoff_at", { ascending: false }).range(0, 99);
   }
 
-  const { data, error } = await query.range(from, to);
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching cached catalog matches:", error);
@@ -136,7 +141,7 @@ export async function getCachedCatalogMatches(
 ): Promise<CatalogMatch[]> {
   return unstable_cache(
     async () => fetchCatalogMatches(leagueCode, tab, page),
-    ["matches-catalog", leagueCode, tab, page.toString()],
+    ["matches-catalog-v2", leagueCode, tab, page.toString()],
     { revalidate: 300, tags: ["matches"] },
   )();
 }
@@ -195,11 +200,13 @@ export async function getCachedInternationalWindowMatches(): Promise<
 export async function getCachedLeagueMatches(league: string): Promise<{
   recentMatches: CatalogMatch[];
   upcomingMatches: CatalogMatch[];
+  allMatches: CatalogMatch[];
 }> {
-  const [recentMatches, upcomingMatches] = await Promise.all([
+  const [recentMatches, upcomingMatches, allMatches] = await Promise.all([
     getCachedCatalogMatches(league, "recent", 1),
     getCachedCatalogMatches(league, "upcoming", 1),
+    getCachedCatalogMatches(league, "all", 1),
   ]);
 
-  return { recentMatches, upcomingMatches };
+  return { recentMatches, upcomingMatches, allMatches };
 }

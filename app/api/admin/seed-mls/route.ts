@@ -1,27 +1,33 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { MLS_LEAGUE_ID, MLS_SEASON, syncMlsSeason } from "@/lib/sports-data/mls-sync";
+import { seedMlsFixtures } from "@/lib/sports-data/mls-seed";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 60;
+
+function isAuthorized(request: Request) {
+  if (process.env.NODE_ENV === "development") {
+    return true;
+  }
+
+  return (
+    request.headers.get("authorization") ===
+    `Bearer ${process.env.CRON_SECRET}`
+  );
+}
 
 export async function GET(request: Request) {
-  if (
-    request.headers.get("authorization") !==
-    "Bearer " + process.env.CRON_SECRET
-  ) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const result = await syncMlsSeason();
+    const result = await seedMlsFixtures();
     revalidateTag("matches", { expire: 0 });
 
     return NextResponse.json({
       ok: true,
-      league: MLS_LEAGUE_ID,
-      season: MLS_SEASON,
       ...result,
     });
   } catch (error) {

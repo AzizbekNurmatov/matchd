@@ -26,7 +26,7 @@ export default async function MatchesPage({
   const params = await searchParams;
   const tab = parseTab(params?.tab || "recent");
   const league = parseLeague(params?.league || "all");
-  const [{ recentMatches, upcomingMatches }, internationalMatches] =
+  const [{ recentMatches, upcomingMatches, allMatches }, internationalMatches] =
     await Promise.all([
       getCachedLeagueMatches(league),
       getCachedInternationalWindowMatches(),
@@ -55,6 +55,7 @@ export default async function MatchesPage({
           }
           recentMatches={recentMatches}
           upcomingMatches={upcomingMatches}
+          allMatches={allMatches}
           internationalMatches={showInternational ? internationalMatches : []}
           supportedLeagues={SUPPORTED_LEAGUES}
         />

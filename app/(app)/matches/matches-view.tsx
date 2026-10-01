@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -30,6 +31,7 @@ type MatchesViewProps = {
   initialTab?: CatalogTab;
   recentMatches: Match[];
   upcomingMatches: Match[];
+  allMatches?: Match[];
   internationalMatches?: Match[];
   supportedLeagues: typeof SUPPORTED_LEAGUES;
 };
@@ -39,12 +41,17 @@ export function MatchesView({
   initialTab = "recent",
   recentMatches,
   upcomingMatches,
+  allMatches = [],
   internationalMatches = [],
   supportedLeagues,
 }: MatchesViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<CatalogTab>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const leagues = useMemo(
     () => [
@@ -69,11 +76,11 @@ export function MatchesView({
     if (activeTab === "upcoming") {
       return upcomingMatches;
     }
-    return [...recentMatches, ...upcomingMatches].sort(
+    return [...allMatches].sort(
       (a, b) =>
-        new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
+        new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
     );
-  }, [activeTab, internationalMatches, recentMatches, upcomingMatches]);
+  }, [activeTab, allMatches, internationalMatches, recentMatches, upcomingMatches]);
 
   function selectTab(nextTab: CatalogTab) {
     setActiveTab(nextTab);
