@@ -1,5 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
+import { syncMlsSeason } from "@/lib/sports-data/mls-sync";
 import { syncRecentMatchesAllLeagues } from "@/lib/sports-data/sync";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,15 @@ export async function GET(request: Request) {
   try {
     const { dateFrom, dateTo, competitions } =
       await syncRecentMatchesAllLeagues();
+
+    let mls: Awaited<ReturnType<typeof syncMlsSeason>> | null = null;
+    let mlsError: string | null = null;
+    try {
+      mls = await syncMlsSeason();
+    } catch (error) {
+      mlsError = error instanceof Error ? error.message : "MLS sync failed";
+      console.error("MLS sync failed:", error);
+    }
 
     revalidateTag("matches", { expire: 0 });
 
@@ -36,6 +46,8 @@ export async function GET(request: Request) {
       matchesUpserted,
       teamsUpserted,
       competitions,
+      mls,
+      mlsError,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Sync failed";

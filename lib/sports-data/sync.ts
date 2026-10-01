@@ -1,6 +1,6 @@
 import {
+  FOOTBALL_DATA_LEAGUES,
   INTERNATIONAL_COMPETITIONS,
-  SUPPORTED_LEAGUES,
 } from "@/lib/sports-data/constants";
 import { footballDataProvider } from "@/lib/sports-data/providers/football-data";
 import type {
@@ -50,7 +50,7 @@ function uniqueTeams(matches: CompetitionMatches["matches"]): ExternalTeam[] {
   return [...byExternalId.values()];
 }
 
-async function upsertCompetitionMatches(
+export async function upsertCompetitionMatches(
   competitionCode: string,
   payload: CompetitionMatches,
 ): Promise<SyncResult> {
@@ -185,9 +185,9 @@ export async function syncRecentMatches(
 export async function syncAllLeagues(season?: number): Promise<SyncResult[]> {
   const results: SyncResult[] = [];
 
-  for (const [index, league] of SUPPORTED_LEAGUES.entries()) {
+  for (const [index, league] of FOOTBALL_DATA_LEAGUES.entries()) {
     results.push(await syncCompetitionMatches(league.code, season));
-    if (index < SUPPORTED_LEAGUES.length - 1) {
+    if (index < FOOTBALL_DATA_LEAGUES.length - 1) {
       await wait(2000);
     }
   }
@@ -210,7 +210,7 @@ export async function syncRecentMatchesAllLeagues(): Promise<{
   const competitions: SyncResult[] = [];
 
   const competitionsToSync = [
-    ...SUPPORTED_LEAGUES,
+    ...FOOTBALL_DATA_LEAGUES,
     ...INTERNATIONAL_COMPETITIONS,
   ];
 

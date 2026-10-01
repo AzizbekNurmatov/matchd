@@ -5,7 +5,13 @@ export const SUPPORTED_LEAGUES = [
   { code: "BL1", name: "Bundesliga", country: "Germany" },
   { code: "SA", name: "Serie A", country: "Italy" },
   { code: "FL1", name: "Ligue 1", country: "France" },
+  { code: "MLS", name: "MLS", country: "USA" },
 ] as const;
+
+/** Leagues ingested from Football-Data.org. MLS uses API-Sports instead. */
+export const FOOTBALL_DATA_LEAGUES = SUPPORTED_LEAGUES.filter(
+  (league) => league.code !== "MLS",
+);
 
 export type SupportedLeagueCode = (typeof SUPPORTED_LEAGUES)[number]["code"];
 

@@ -31,10 +31,21 @@ const LEAGUE_BADGES: { test: RegExp; className: string }[] = [
 
 function leagueBadgeClass(name: string, code: string | null) {
   const label = `${code ?? ""} ${name}`;
+  if (/\b(mls|major league soccer)\b/i.test(label)) {
+    return "";
+  }
   return (
     LEAGUE_BADGES.find((league) => league.test.test(label))?.className ??
     DEFAULT_BADGE
   );
+}
+
+function leagueBadgeLabel(name: string, code: string | null) {
+  const label = `${code ?? ""} ${name}`;
+  if (/\b(mls|major league soccer)\b/i.test(label)) {
+    return "MLS";
+  }
+  return name;
 }
 
 export function MatchCardHeader({
@@ -47,13 +58,19 @@ export function MatchCardHeader({
   kickoffAt: string;
 }) {
   const name = league ?? "Match";
+  const code = leagueCode ?? null;
+  const isMls = leagueBadgeLabel(name, code) === "MLS";
 
   return (
     <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
       <span
-        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#0F172A] ${leagueBadgeClass(name, leagueCode ?? null)}`}
+        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border uppercase tracking-wider ${
+          isMls
+            ? "border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-800"
+            : `px-2.5 py-1 text-[11px] font-semibold text-[#0F172A] ${leagueBadgeClass(name, code)}`
+        }`}
       >
-        {name}
+        {leagueBadgeLabel(name, code)}
       </span>
       <time
         dateTime={kickoffAt}
