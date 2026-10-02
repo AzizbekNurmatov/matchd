@@ -44,6 +44,7 @@ export function MatchesView({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<CatalogTab>(initialTab);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -62,12 +63,25 @@ export function MatchesView({
 
   const showInternational = internationalMatches.length > 0;
 
-  const visibleMatches = useMemo(() => {
+  const filteredByTabAndLeague = useMemo(() => {
     if (activeTab === "international") {
       return internationalMatches;
     }
     return filterLeagueMatches(matches, activeTab);
   }, [activeTab, internationalMatches, matches]);
+
+  const displayedMatches = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return filteredByTabAndLeague.filter((m) => {
+      if (!query) return true;
+      return (
+        m.home_team?.name?.toLowerCase().includes(query) ||
+        m.away_team?.name?.toLowerCase().includes(query)
+      );
+    });
+  }, [filteredByTabAndLeague, searchQuery]);
+
+  const searchActive = searchQuery.trim().length > 0;
 
   function selectTab(nextTab: CatalogTab) {
     setActiveTab(nextTab);
@@ -135,27 +149,68 @@ export function MatchesView({
           ) : null}
         </nav>
 
-        {activeTab === "international" ? null : (
-        <LeagueDropdown
-          tab={activeTab}
-          league={initialLeague}
-          leagues={leagues}
-          onLeagueClick={onLeagueClick}
-          onOpen={() => {}}
-        />
-        )}
+        <div className="flex items-center justify-end gap-2">
+          <div className="relative shrink-0">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search teams"
+              aria-label="Search teams"
+              className={cn(
+                "h-9 w-44 rounded-sm border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:outline-none md:w-52 [&::-webkit-search-cancel-button]:hidden",
+                searchQuery ? "py-0 pl-3 pr-7" : "px-3",
+              )}
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-[11px] leading-none text-slate-400 transition-colors hover:text-slate-600"
+              >
+                ✕
+              </button>
+            ) : null}
+          </div>
+
+          {activeTab === "international" ? null : (
+            <LeagueDropdown
+              tab={activeTab}
+              league={initialLeague}
+              leagues={leagues}
+              onLeagueClick={onLeagueClick}
+              onOpen={() => {}}
+            />
+          )}
+        </div>
       </div>
 
-      {visibleMatches.length === 0 ? (
+      {displayedMatches.length === 0 ? (
         <div
           className={cn(
             "mt-8 border border-[#CBD2D9] bg-[#F4F6F8] px-5 py-12 transition-opacity",
             isPending && "opacity-70",
           )}
         >
-          <p className="font-mono text-xs uppercase tracking-widest text-[#475569]">
-            {emptyCopy(activeTab, initialLeague, supportedLeagues)}
-          </p>
+          {searchActive ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-[#475569]">
+                No matches found for &quot;{searchQuery}&quot;
+              </p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="cursor-pointer text-xs text-[#9A3412] transition-colors hover:text-[#0F172A]"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : (
+            <p className="font-mono text-xs uppercase tracking-widest text-[#475569]">
+              {emptyCopy(activeTab, initialLeague, supportedLeagues)}
+            </p>
+          )}
         </div>
       ) : (
         <div
@@ -164,7 +219,7 @@ export function MatchesView({
             isPending && "opacity-70",
           )}
         >
-          {visibleMatches.map((match) => (
+          {displayedMatches.map((match) => (
             <MatchTicket key={match.id} match={match} />
           ))}
         </div>
