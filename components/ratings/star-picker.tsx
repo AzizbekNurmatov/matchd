@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { rateMatch } from "@/app/(app)/matches/[id]/actions";
 import { StarIcon } from "@/components/ratings/star-icon";
@@ -9,6 +9,8 @@ import {
   RATING_MIN,
   RATING_STEP,
   STAR_COUNT,
+  STAR_GOLD,
+  STAR_OUTLINE,
   formatRating,
 } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
@@ -23,9 +25,13 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
   const [preview, setPreview] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [optimisticValue, setOptimisticValue] = useOptimistic(value);
+  const [committed, setCommitted] = useState<number | null>(value);
 
-  const selected = optimisticValue;
+  useEffect(() => {
+    setCommitted(value);
+  }, [value]);
+
+  const selected = committed;
   const shown = preview ?? selected ?? 0;
 
   function submit(rating: number) {
@@ -33,11 +39,13 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
       return;
     }
 
+    const previous = committed;
     setError(null);
+    setCommitted(rating);
     startTransition(async () => {
-      setOptimisticValue(rating);
       const result = await rateMatch(matchId, rating);
       if (!result.ok) {
+        setCommitted(previous);
         setError(result.error);
         return;
       }
@@ -54,10 +62,7 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className={cn(
-          "flex items-center gap-3",
-          isPending && "pointer-events-none opacity-70",
-        )}
+        className="flex items-center gap-3"
         onMouseLeave={() => setPreview(null)}
       >
         <div
@@ -93,10 +98,24 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
           {Array.from({ length: STAR_COUNT }, (_, index) => {
             const star = index + 1;
             const half = star - 0.5;
+            const hovered =
+              preview != null && preview > index && preview <= star;
 
             return (
-              <span key={star} className="relative">
-                <StarIcon size={32} fill={shown - index} />
+              <span
+                key={star}
+                className={cn(
+                  "relative transition-transform duration-200 ease-out motion-reduce:transition-none",
+                  hovered && "z-10 scale-110",
+                )}
+              >
+                <StarIcon
+                  size={32}
+                  fill={shown - index}
+                  fillColor={STAR_GOLD}
+                  emptyColor={STAR_OUTLINE}
+                  interactive
+                />
                 <span className="absolute inset-0 flex">
                   <button
                     type="button"
@@ -121,12 +140,12 @@ export function StarPicker({ matchId, value }: StarPickerProps) {
             );
           })}
         </div>
-        <p className="min-w-[2.5rem] font-serif text-2xl tracking-tight text-[#B45309]">
+        <p className="min-w-[2.5rem] font-serif text-2xl tabular-nums tracking-tight text-[#D97706] transition-colors duration-200">
           {shown > 0 ? formatRating(shown) : "–"}
         </p>
       </div>
       <p className="text-sm text-muted">
-        {preview
+        {preview != null && preview !== selected
           ? `Rate ${formatRating(preview)}`
           : selected
             ? `You rated this ${formatRating(selected)} · hover to change`

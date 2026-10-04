@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { rateUfcFight } from "@/app/(app)/ufc/actions";
 import { StarIcon } from "@/components/ratings/star-icon";
@@ -9,6 +9,8 @@ import {
   RATING_MIN,
   RATING_STEP,
   STAR_COUNT,
+  STAR_GOLD,
+  STAR_OUTLINE,
   formatRating,
 } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
@@ -24,19 +26,25 @@ export function UfcFightStars({ fightId, eventId, value }: UfcFightStarsProps) {
   const [preview, setPreview] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [optimisticValue, setOptimisticValue] = useOptimistic(value);
-  const shown = preview ?? optimisticValue ?? 0;
+  const [committed, setCommitted] = useState<number | null>(value);
+  const shown = preview ?? committed ?? 0;
+
+  useEffect(() => {
+    setCommitted(value);
+  }, [value]);
 
   function submit(rating: number) {
     if (isPending) {
       return;
     }
 
+    const previous = committed;
     setError(null);
+    setCommitted(rating);
     startTransition(async () => {
-      setOptimisticValue(rating);
       const result = await rateUfcFight(fightId, eventId, rating);
       if (!result.ok) {
+        setCommitted(previous);
         setError(result.error);
         return;
       }
@@ -47,19 +55,30 @@ export function UfcFightStars({ fightId, eventId, value }: UfcFightStarsProps) {
   return (
     <div className="flex shrink-0 flex-col items-end gap-1">
       <div
-        className={cn(
-          "flex items-center gap-1",
-          isPending && "pointer-events-none opacity-70",
-        )}
+        className="flex items-center gap-1"
         onMouseLeave={() => setPreview(null)}
       >
         <div className="flex" aria-label="Your rating">
           {Array.from({ length: STAR_COUNT }, (_, index) => {
             const star = index + 1;
             const half = star - 0.5;
+            const hovered =
+              preview != null && preview > index && preview <= star;
             return (
-              <span key={star} className="relative">
-                <StarIcon size={16} fill={shown - index} />
+              <span
+                key={star}
+                className={cn(
+                  "relative transition-transform duration-200 ease-out motion-reduce:transition-none",
+                  hovered && "z-10 scale-110",
+                )}
+              >
+                <StarIcon
+                  size={16}
+                  fill={shown - index}
+                  fillColor={STAR_GOLD}
+                  emptyColor={STAR_OUTLINE}
+                  interactive
+                />
                 <span className="absolute inset-0 flex">
                   <button
                     type="button"
@@ -80,7 +99,7 @@ export function UfcFightStars({ fightId, eventId, value }: UfcFightStarsProps) {
             );
           })}
         </div>
-        <span className="w-7 text-right text-xs font-semibold tabular-nums text-[#B45309]">
+        <span className="w-7 text-right text-xs font-semibold tabular-nums text-[#D97706] transition-colors duration-200">
           {shown > 0 ? formatRating(shown) : ""}
         </span>
       </div>

@@ -5,6 +5,8 @@ export const STAR_COUNT = 5;
 
 export const STAR_FILL = "#9a3412";
 export const STAR_EMPTY = "#cbd2d9";
+export const STAR_GOLD = "#D97706";
+export const STAR_OUTLINE = "#94A3B8";
 
 export function isValidRating(value: number): boolean {
   if (value < RATING_MIN || value > RATING_MAX) {
