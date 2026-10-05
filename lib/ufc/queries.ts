@@ -122,6 +122,12 @@ type FightRow = {
   details: string | null;
 };
 
+export type FighterSearchHit = {
+  name: string;
+  imageUrl: string | null;
+  events: UfcEventCardData[];
+};
+
 function toFightCard(fight: FightRow, ratings: Map<string, number>): UfcFightCard {
   return {
     id: fight.id,
@@ -274,4 +280,200 @@ export async function getUfcEventReviews(eventId: string): Promise<ReviewItem[]>
       },
     ];
   });
+}
+
+const FIGHT_SEARCH_SELECT =
+  "id, order_index, weight_class, fighter_a_name, fighter_a_image, fighter_b_name, fighter_b_image, winner_id, method, details, event:ufc_events(id, title, date, status, venue)";
+
+type EventEmbed = {
+  id: string;
+  title: string;
+  date: string;
+  status: string | null;
+  venue: string | null;
+};
+
+type FightSearchRow = FightRow & {
+  event: EventEmbed | EventEmbed[] | null;
+};
+
+export async function searchUfcCatalog(query: string): Promise<{
+  fighters: FighterSearchHit[];
+  events: UfcEventCardData[];
+}> {
+  const term = query.trim();
+  const safe = term.replace(/[%_\\]/g, "");
+  if (!safe) {
+    return { fighters: [], events: [] };
+  }
+
+  const pattern = `%${safe}%`;
+  const supabase = await createClient();
+  const [eventsResult, sideA, sideB] = await Promise.all([
+    supabase
+      .from("ufc_events")
+      .select("*, ufc_fights(*)")
+      .ilike("title", pattern)
+      .order("date", { ascending: false })
+      .limit(4),
+    supabase
+      .from("ufc_fights")
+      .select(FIGHT_SEARCH_SELECT)
+      .ilike("fighter_a_name", pattern)
+      .limit(40),
+    supabase
+      .from("ufc_fights")
+      .select(FIGHT_SEARCH_SELECT)
+      .ilike("fighter_b_name", pattern)
+      .limit(40),
+  ]);
+
+  if (eventsResult.error) {
+    console.error("Error searching UFC events:", eventsResult.error.message);
+  }
+  if (sideA.error) {
+    console.error("Error searching fighters:", sideA.error.message);
+  }
+  if (sideB.error) {
+    console.error("Error searching fighters:", sideB.error.message);
+  }
+
+  const eventRows = eventsResult.data ?? [];
+  const fightRows = dedupeFightRows([
+    ...((sideA.data ?? []) as FightSearchRow[]),
+    ...((sideB.data ?? []) as FightSearchRow[]),
+  ]);
+  const ratings = await loadUserRatings(supabase, [
+    ...eventRows.flatMap((event) =>
+      (event.ufc_fights ?? []).map((fight) => fight.id),
+    ),
+    ...fightRows.map((fight) => fight.id),
+  ]);
+
+  return {
+    fighters: groupFighterHits(fightRows, safe, ratings),
+    events: eventRows.map((event) =>
+      toEventCard(event, event.ufc_fights ?? [], ratings),
+    ),
+  };
+}
+
+function dedupeFightRows(rows: FightSearchRow[]) {
+  const byId = new Map<string, FightSearchRow>();
+  for (const row of rows) {
+    byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
+function groupFighterHits(
+  rows: FightSearchRow[],
+  query: string,
+  ratings: Map<string, number>,
+): FighterSearchHit[] {
+  const needle = query.trim().toLowerCase();
+  const byFighter = new Map<
+    string,
+    {
+      name: string;
+      imageUrl: string | null;
+      byEvent: Map<string, { event: EventEmbed; fights: FightRow[] }>;
+    }
+  >();
+
+  for (const row of rows) {
+    considerFighter(byFighter, row, "a", needle);
+    considerFighter(byFighter, row, "b", needle);
+  }
+
+  return [...byFighter.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 6)
+    .map((fighter) => ({
+      name: fighter.name,
+      imageUrl: fighter.imageUrl,
+      events: [...fighter.byEvent.values()]
+        .sort(
+          (a, b) =>
+            new Date(b.event.date).getTime() - new Date(a.event.date).getTime(),
+        )
+        .slice(0, 3)
+        .map(({ event, fights }) => toEventCard(event, fights, ratings)),
+    }));
+}
+
+function considerFighter(
+  byFighter: Map<
+    string,
+    {
+      name: string;
+      imageUrl: string | null;
+      byEvent: Map<string, { event: EventEmbed; fights: FightRow[] }>;
+    }
+  >,
+  row: FightSearchRow,
+  side: "a" | "b",
+  needle: string,
+) {
+  const name = side === "a" ? row.fighter_a_name : row.fighter_b_name;
+  const image = side === "a" ? row.fighter_a_image : row.fighter_b_image;
+  if (!name.toLowerCase().includes(needle)) {
+    return;
+  }
+
+  const event = asSingle(row.event);
+  if (!event) {
+    return;
+  }
+
+  const key = name.trim().toLowerCase();
+  let fighter = byFighter.get(key);
+  if (!fighter) {
+    fighter = {
+      name: name.trim(),
+      imageUrl: image,
+      byEvent: new Map(),
+    };
+    byFighter.set(key, fighter);
+  } else if (!fighter.imageUrl && image) {
+    fighter.imageUrl = image;
+  }
+
+  let bucket = fighter.byEvent.get(event.id);
+  if (!bucket) {
+    bucket = { event, fights: [] };
+    fighter.byEvent.set(event.id, bucket);
+  }
+  if (!bucket.fights.some((fight) => fight.id === row.id)) {
+    bucket.fights.push(row);
+  }
+}
+
+function asSingle<T>(value: T | T[] | null): T | null {
+  if (!value) {
+    return null;
+  }
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function toEventCard(
+  event: {
+    id: string;
+    title: string;
+    date: string;
+    status: string | null;
+    venue: string | null;
+  },
+  fights: FightRow[],
+  ratings: Map<string, number>,
+): UfcEventCardData {
+  const ordered = [...fights].sort((a, b) => b.order_index - a.order_index);
+  return {
+    id: event.id,
+    name: event.title,
+    startsAt: event.date,
+    status: event.status ?? "UPCOMING",
+    venue: event.venue,
+    fights: ordered.map((fight) => toFightCard(fight, ratings)),
+  };
 }

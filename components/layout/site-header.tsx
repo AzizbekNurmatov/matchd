@@ -47,6 +47,32 @@ export async function SiteHeader() {
           <Link href="/fights" className="hover:text-foreground">
             Fights
           </Link>
+          <Link
+            href="/search"
+            aria-label="Search"
+            className="inline-flex items-center hover:text-foreground"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+              className="h-4 w-4"
+            >
+              <circle
+                cx="7"
+                cy="7"
+                r="4.25"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M10.5 10.5L13.5 13.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </Link>
           {username ? (
             <>
               <Link

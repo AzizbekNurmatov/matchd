@@ -217,3 +217,40 @@ export async function getCachedLeagueMatches(league: string): Promise<{
     ),
   };
 }
+
+export async function searchLeagueMatches(
+  leagueCode: string,
+  limit = 3,
+): Promise<CatalogMatch[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select(MATCH_SELECT)
+    .eq("competition.short_name", leagueCode)
+    .order("kickoff_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error searching league matches:", error);
+    }
+    return [];
+  }
+
+  const ratingByMatch = await loadRatings(
+    supabase,
+    data.map((row) => row.id),
+  );
+
+  return data.map((row) => ({
+    id: row.id,
+    kickoff_at: row.kickoff_at,
+    status: row.status,
+    home_score: row.home_score,
+    away_score: row.away_score,
+    competition: asSingle(row.competition),
+    home_team: asSingle(row.home_team),
+    away_team: asSingle(row.away_team),
+    averageRating: ratingByMatch.get(row.id) ?? null,
+  }));
+}
