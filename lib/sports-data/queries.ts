@@ -4,7 +4,12 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { toRatingNumber } from "@/lib/ratings";
 import type { CatalogMatch, CatalogTab } from "@/lib/sports-data/catalog";
-import { INTERNATIONAL_COMPETITIONS } from "@/lib/sports-data/constants";
+import {
+  INTERNATIONAL_COMPETITIONS,
+  SUPPORTED_LEAGUES,
+  isInternationalCompetitionCode,
+  isSupportedLeagueCode,
+} from "@/lib/sports-data/constants";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 import type { Database } from "@/types/database";
 
@@ -218,31 +223,204 @@ export async function getCachedLeagueMatches(league: string): Promise<{
   };
 }
 
-export async function searchLeagueMatches(
-  leagueCode: string,
-  limit = 3,
-): Promise<CatalogMatch[]> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("matches")
-    .select(MATCH_SELECT)
-    .eq("competition.short_name", leagueCode)
-    .order("kickoff_at", { ascending: false })
-    .limit(limit);
+export type TeamSearchHit = {
+  id: string;
+  name: string;
+  shortName: string | null;
+  crestUrl: string | null;
+};
 
-  if (error || !data) {
-    if (error) {
-      console.error("Error searching league matches:", error);
-    }
-    return [];
+export type LeagueSearchHit = {
+  id: string;
+  name: string;
+  code: string | null;
+  detail: string | null;
+  href: string;
+};
+
+export async function searchSoccerCatalog(query: string): Promise<{
+  teams: TeamSearchHit[];
+  leagues: LeagueSearchHit[];
+  matches: CatalogMatch[];
+}> {
+  const safe = query.trim().replace(/[%_\\]/g, "");
+  if (!safe) {
+    return { teams: [], leagues: [], matches: [] };
   }
 
-  const ratingByMatch = await loadRatings(
+  const pattern = `%${safe}%`;
+  const needle = safe.toLowerCase();
+  const supabase = createPublicClient();
+  const catalogCodes = [...SUPPORTED_LEAGUES, ...INTERNATIONAL_COMPETITIONS]
+    .filter((league) =>
+      `${league.code} ${league.name} ${league.country}`.toLowerCase().includes(needle),
+    )
+    .map((league) => league.code);
+
+  const [teamsByName, teamsByShort, leaguesByName, leaguesByShort, leaguesByCountry, catalogLeagues] =
+    await Promise.all([
+      supabase
+        .from("teams")
+        .select("id, name, short_name, crest_url")
+        .ilike("name", pattern)
+        .order("name")
+        .limit(8),
+      supabase
+        .from("teams")
+        .select("id, name, short_name, crest_url")
+        .ilike("short_name", pattern)
+        .order("name")
+        .limit(8),
+      supabase
+        .from("competitions")
+        .select("id, name, short_name, country")
+        .ilike("name", pattern)
+        .order("name")
+        .limit(6),
+      supabase
+        .from("competitions")
+        .select("id, name, short_name, country")
+        .ilike("short_name", pattern)
+        .order("name")
+        .limit(6),
+      supabase
+        .from("competitions")
+        .select("id, name, short_name, country")
+        .ilike("country", pattern)
+        .order("name")
+        .limit(6),
+      catalogCodes.length > 0
+        ? supabase
+            .from("competitions")
+            .select("id, name, short_name, country")
+            .in("short_name", catalogCodes)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+  for (const result of [teamsByName, teamsByShort, leaguesByName, leaguesByShort, leaguesByCountry, catalogLeagues]) {
+    if (result.error) {
+      console.error("Error searching soccer catalog:", result.error.message);
+    }
+  }
+
+  const teams = dedupeById([
+    ...(teamsByName.data ?? []),
+    ...(teamsByShort.data ?? []),
+  ])
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 8)
+    .map((team) => ({
+      id: team.id,
+      name: team.name,
+      shortName: team.short_name,
+      crestUrl: team.crest_url,
+    }));
+
+  const leagues = dedupeById([
+    ...(leaguesByName.data ?? []),
+    ...(leaguesByShort.data ?? []),
+    ...(leaguesByCountry.data ?? []),
+    ...(catalogLeagues.data ?? []),
+  ])
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 6)
+    .map((league) => ({
+      id: league.id,
+      name: league.name,
+      code: league.short_name,
+      detail: league.country,
+      href: leagueHref(league.short_name),
+    }));
+
+  const teamIds = teams.map((team) => team.id);
+  const competitionIds = leagues.map((league) => league.id);
+  const matchQueries = [];
+
+  if (teamIds.length > 0) {
+    matchQueries.push(
+      supabase
+        .from("matches")
+        .select(MATCH_SELECT)
+        .in("home_team_id", teamIds)
+        .order("kickoff_at", { ascending: false })
+        .limit(12),
+      supabase
+        .from("matches")
+        .select(MATCH_SELECT)
+        .in("away_team_id", teamIds)
+        .order("kickoff_at", { ascending: false })
+        .limit(12),
+    );
+  }
+
+  if (competitionIds.length > 0) {
+    matchQueries.push(
+      supabase
+        .from("matches")
+        .select(MATCH_SELECT)
+        .in("competition_id", competitionIds)
+        .order("kickoff_at", { ascending: false })
+        .limit(12),
+    );
+  }
+
+  const matchResults = await Promise.all(matchQueries);
+  for (const result of matchResults) {
+    if (result.error) {
+      console.error("Error searching soccer matches:", result.error.message);
+    }
+  }
+
+  const matches = await hydrateMatchRows(
     supabase,
-    data.map((row) => row.id),
+    dedupeById(matchResults.flatMap((result) => result.data ?? []))
+      .sort(
+        (a, b) =>
+          new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
+      )
+      .slice(0, 12),
   );
 
-  return data.map((row) => ({
+  return { teams, leagues, matches };
+}
+
+function leagueHref(code: string | null): string {
+  if (code && isSupportedLeagueCode(code)) {
+    return `/matches?league=${code}`;
+  }
+  if (code && isInternationalCompetitionCode(code)) {
+    return "/matches?tab=international";
+  }
+  return "/matches";
+}
+
+function dedupeById<T extends { id: string }>(rows: T[]): T[] {
+  const byId = new Map<string, T>();
+  for (const row of rows) {
+    byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
+async function hydrateMatchRows(
+  supabase: ReturnType<typeof createPublicClient>,
+  rows: {
+    id: string;
+    kickoff_at: string;
+    status: CatalogMatch["status"];
+    home_score: number | null;
+    away_score: number | null;
+    competition: CatalogMatch["competition"] | NonNullable<CatalogMatch["competition"]>[] | null;
+    home_team: CatalogMatch["home_team"] | NonNullable<CatalogMatch["home_team"]>[] | null;
+    away_team: CatalogMatch["away_team"] | NonNullable<CatalogMatch["away_team"]>[] | null;
+  }[],
+): Promise<CatalogMatch[]> {
+  const ratingByMatch = await loadRatings(
+    supabase,
+    rows.map((row) => row.id),
+  );
+
+  return rows.map((row) => ({
     id: row.id,
     kickoff_at: row.kickoff_at,
     status: row.status,

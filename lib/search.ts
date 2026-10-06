@@ -1,8 +1,11 @@
 import "server-only";
 
-import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
 import type { CatalogMatch } from "@/lib/sports-data/catalog";
-import { searchLeagueMatches } from "@/lib/sports-data/queries";
+import {
+  searchSoccerCatalog,
+  type LeagueSearchHit,
+  type TeamSearchHit,
+} from "@/lib/sports-data/queries";
 import {
   searchUfcCatalog,
   type FighterSearchHit,
@@ -21,12 +24,29 @@ export type SearchResults = {
   fighters: FighterSearchHit[];
   events: UfcEventCardData[];
   promotions: PromotionSearchHit[];
+  teams: TeamSearchHit[];
+  leagues: LeagueSearchHit[];
+  matches: CatalogMatch[];
 };
 
 const EMPTY_RESULTS: SearchResults = {
   fighters: [],
   events: [],
   promotions: [],
+  teams: [],
+  leagues: [],
+  matches: [],
+};
+
+const EMPTY_UFC = {
+  fighters: [] as FighterSearchHit[],
+  events: [] as UfcEventCardData[],
+};
+
+const EMPTY_SOCCER = {
+  teams: [] as TeamSearchHit[],
+  leagues: [] as LeagueSearchHit[],
+  matches: [] as CatalogMatch[],
 };
 
 export async function searchCatalog(rawQuery: string): Promise<SearchResults> {
@@ -35,42 +55,41 @@ export async function searchCatalog(rawQuery: string): Promise<SearchResults> {
     return EMPTY_RESULTS;
   }
 
-  const seeds = promotionCatalog().filter((item) =>
-    `${item.name} ${item.detail} ${item.keywords}`.toLowerCase().includes(query),
-  );
-
-  const [ufc, promotions] = await Promise.all([
-    searchUfcCatalog(query),
-    Promise.all(seeds.slice(0, 4).map((item) => loadPromotion(item))),
+  const [ufc, soccer] = await Promise.all([
+    searchUfcCatalog(query).catch((error: unknown) => {
+      console.error("UFC search failed:", error);
+      return EMPTY_UFC;
+    }),
+    searchSoccerCatalog(query).catch((error: unknown) => {
+      console.error("Soccer search failed:", error);
+      return EMPTY_SOCCER;
+    }),
   ]);
 
   return {
     fighters: ufc.fighters,
     events: ufc.events,
-    promotions,
+    promotions: promotionCatalog()
+      .filter((item) =>
+        `${item.name} ${item.detail} ${item.keywords}`
+          .toLowerCase()
+          .includes(query),
+      )
+      .slice(0, 4)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        detail: item.detail,
+        href: item.href,
+        matches: [],
+      })),
+    teams: soccer.teams,
+    leagues: soccer.leagues,
+    matches: soccer.matches,
   };
 }
 
-async function loadPromotion(item: PromotionSeed): Promise<PromotionSearchHit> {
-  return {
-    id: item.id,
-    name: item.name,
-    detail: item.detail,
-    href: item.href,
-    matches: item.leagueCode ? await searchLeagueMatches(item.leagueCode, 3) : [],
-  };
-}
-
-type PromotionSeed = {
-  id: string;
-  name: string;
-  detail: string;
-  href: string;
-  keywords: string;
-  leagueCode: string | null;
-};
-
-function promotionCatalog(): PromotionSeed[] {
+function promotionCatalog() {
   return [
     {
       id: "ufc",
@@ -78,15 +97,6 @@ function promotionCatalog(): PromotionSeed[] {
       detail: "Mixed martial arts",
       href: "/fights",
       keywords: "ufc ultimate fighting championship mma",
-      leagueCode: null,
     },
-    ...SUPPORTED_LEAGUES.map((league) => ({
-      id: league.code,
-      name: league.name,
-      detail: league.country,
-      href: `/matches?league=${league.code}`,
-      keywords: `${league.code} ${league.name} ${league.country}`,
-      leagueCode: league.code,
-    })),
   ];
 }

@@ -77,13 +77,16 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
     results != null &&
     (results.fighters.length > 0 ||
       results.events.length > 0 ||
-      results.promotions.length > 0);
+      results.promotions.length > 0 ||
+      results.teams.length > 0 ||
+      results.leagues.length > 0 ||
+      results.matches.length > 0);
 
   return (
     <div className="mt-8">
       <form action="/search" className="relative">
         <label htmlFor="catalog-search" className="sr-only">
-          Search for fighters, events, or promotions
+          Search for fighters, teams, events, or matches
         </label>
         <input
           ref={inputRef}
@@ -93,7 +96,7 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
           value={query}
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search for fighters, events, or promotions..."
+          placeholder="Search for fighters, teams, events, or matches..."
           className={cn(
             "h-12 w-full rounded-sm border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:outline-none [&::-webkit-search-cancel-button]:hidden",
             query ? "py-0 pr-10 pl-4" : "px-4",
@@ -118,7 +121,7 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
 
       {!trimmed ? (
         <p className="mt-8 text-sm text-[#475569]">
-          Search for fighters, events, or promotions...
+          Search for fighters, teams, events, or matches...
         </p>
       ) : pending && !hasResults ? (
         <p className="mt-8 font-mono text-xs uppercase tracking-widest text-[#475569]">
@@ -130,6 +133,78 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
         </p>
       ) : results ? (
         <div className={cn("mt-10 flex flex-col gap-12", pending && "opacity-70")}>
+          {results.matches.length > 0 ? (
+            <section>
+              <SectionLabel>Matches</SectionLabel>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {results.matches.map((match) => (
+                  <MatchTicket key={match.id} match={match} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {results.teams.length > 0 ? (
+            <section>
+              <SectionLabel>Teams</SectionLabel>
+              <ul className="mt-4 divide-y divide-[#E2E8F0] border border-[#BAC2CB] bg-white shadow-card">
+                {results.teams.map((team) => (
+                  <li key={team.id} className="flex items-center gap-3 px-4 py-3">
+                    {team.crestUrl ? (
+                      <img
+                        src={team.crestUrl}
+                        alt=""
+                        className="h-6 w-6 shrink-0 object-contain"
+                      />
+                    ) : (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center bg-[#E4E7EB] font-mono text-[9px] text-[#475569]">
+                        {team.name.slice(0, 1)}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[#0B132B]">
+                        {team.name}
+                      </p>
+                      {team.shortName && team.shortName !== team.name ? (
+                        <p className="text-xs text-[#475569]">{team.shortName}</p>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {results.leagues.length > 0 ? (
+            <section>
+              <SectionLabel>Leagues</SectionLabel>
+              <div className="mt-4 flex flex-col gap-3">
+                {results.leagues.map((league) => (
+                  <Link
+                    key={league.id}
+                    href={league.href}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-[#BAC2CB] bg-white px-6 py-4 shadow-card"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        League
+                      </p>
+                      <h3 className="truncate text-lg font-bold tracking-tight text-slate-900">
+                        {league.name}
+                      </h3>
+                      {league.detail ? (
+                        <p className="text-xs text-slate-500">{league.detail}</p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-[#B45309]">
+                      View →
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           {results.fighters.length > 0 ? (
             <section>
               <SectionLabel>Fighters</SectionLabel>
