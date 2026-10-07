@@ -35,7 +35,7 @@ export async function SiteHeader() {
   const username = await getUsername();
 
   return (
-    <header className="border-b border-border">
+    <header className="border-b border-border bg-[#D8DCE2]/80 backdrop-blur-md">
       <Container className="flex h-14 items-center justify-between">
         <Link href="/" className="font-serif text-xl tracking-tight">
           matchd

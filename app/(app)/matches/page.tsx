@@ -33,7 +33,7 @@ export default async function MatchesPage({
   const showInternational = internationalMatches.length > 0;
 
   return (
-    <div className="bg-[#D8DCE2]">
+    <div>
       <Container className="py-12 sm:py-14">
         <header className="border-b border-[#CBD2D9] pb-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#475569]">
