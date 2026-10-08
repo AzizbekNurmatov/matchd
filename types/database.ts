@@ -386,6 +386,89 @@ export type Database = {
           },
         ];
       };
+      f1_races: {
+        Row: {
+          id: string;
+          season: number;
+          name: string;
+          circuit_name: string | null;
+          circuit_image: string | null;
+          country: string | null;
+          starts_at: string;
+          status: string | null;
+          winner_driver: string | null;
+          winner_team: string | null;
+          winner_driver_image: string | null;
+          driver_names: string;
+          sessions: Json;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          season: number;
+          name: string;
+          circuit_name?: string | null;
+          circuit_image?: string | null;
+          country?: string | null;
+          starts_at: string;
+          status?: string | null;
+          winner_driver?: string | null;
+          winner_team?: string | null;
+          winner_driver_image?: string | null;
+          driver_names?: string;
+          sessions?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          season?: number;
+          name?: string;
+          circuit_name?: string | null;
+          circuit_image?: string | null;
+          country?: string | null;
+          starts_at?: string;
+          status?: string | null;
+          winner_driver?: string | null;
+          winner_team?: string | null;
+          winner_driver_image?: string | null;
+          driver_names?: string;
+          sessions?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      f1_race_ratings: {
+        Row: {
+          id: string;
+          race_id: string;
+          user_id: string;
+          rating: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          race_id: string;
+          user_id: string;
+          rating?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          race_id?: string;
+          user_id?: string;
+          rating?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "f1_race_ratings_race_id_fkey";
+            columns: ["race_id"];
+            isOneToOne: false;
+            referencedRelation: "f1_races";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       match_rating_stats: {

@@ -27,7 +27,7 @@ export default async function SearchPage({
             SEARCH
           </h1>
           <p className="mt-2 text-sm text-[#475569]">
-            Fighters, teams, events, and matches across the archive.
+            Fighters, teams, races, and matches across the archive.
           </p>
         </header>
         <SearchView initialQuery={query} initialResults={results} />

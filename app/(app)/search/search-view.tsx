@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { F1RaceCard } from "@/components/f1/f1-race-card";
 import { MatchTicket } from "@/components/matches/match-ticket";
 import { UfcEventCard } from "@/components/ufc/ufc-event-card";
 import { cn } from "@/lib/utils";
@@ -80,13 +81,14 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
       results.promotions.length > 0 ||
       results.teams.length > 0 ||
       results.leagues.length > 0 ||
-      results.matches.length > 0);
+      results.matches.length > 0 ||
+      results.races.length > 0);
 
   return (
     <div className="mt-8">
       <form action="/search" className="relative">
         <label htmlFor="catalog-search" className="sr-only">
-          Search for fighters, teams, events, or matches
+          Search for fighters, teams, races, or matches
         </label>
         <input
           ref={inputRef}
@@ -96,7 +98,7 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
           value={query}
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search for fighters, teams, events, or matches..."
+          placeholder="Search for fighters, teams, races, or matches..."
           className={cn(
             "h-12 w-full rounded-sm border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:outline-none [&::-webkit-search-cancel-button]:hidden",
             query ? "py-0 pr-10 pl-4" : "px-4",
@@ -121,7 +123,7 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
 
       {!trimmed ? (
         <p className="mt-8 text-sm text-[#475569]">
-          Search for fighters, teams, events, or matches...
+          Search for fighters, teams, races, or matches...
         </p>
       ) : pending && !hasResults ? (
         <p className="mt-8 font-mono text-xs uppercase tracking-widest text-[#475569]">
@@ -252,6 +254,17 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
               <div className="mt-4 flex flex-col gap-4">
                 {results.events.map((event) => (
                   <UfcEventCard key={event.id} event={event} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {results.races.length > 0 ? (
+            <section>
+              <SectionLabel>Races</SectionLabel>
+              <div className="mt-4 flex flex-col gap-4">
+                {results.races.map((race) => (
+                  <F1RaceCard key={race.id} race={race} />
                 ))}
               </div>
             </section>

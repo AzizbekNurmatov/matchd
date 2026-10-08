@@ -47,6 +47,9 @@ export async function SiteHeader() {
           <Link href="/fights" className="hover:text-foreground">
             Fights
           </Link>
+          <Link href="/f1" className="hover:text-foreground">
+            F1
+          </Link>
           <Link
             href="/search"
             aria-label="Search"

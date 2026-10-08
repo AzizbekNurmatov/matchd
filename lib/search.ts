@@ -6,6 +6,8 @@ import {
   type LeagueSearchHit,
   type TeamSearchHit,
 } from "@/lib/sports-data/queries";
+import { searchF1Races } from "@/lib/f1/queries";
+import type { F1RaceCardData } from "@/lib/f1/types";
 import {
   searchUfcCatalog,
   type FighterSearchHit,
@@ -27,6 +29,7 @@ export type SearchResults = {
   teams: TeamSearchHit[];
   leagues: LeagueSearchHit[];
   matches: CatalogMatch[];
+  races: F1RaceCardData[];
 };
 
 const EMPTY_RESULTS: SearchResults = {
@@ -36,6 +39,7 @@ const EMPTY_RESULTS: SearchResults = {
   teams: [],
   leagues: [],
   matches: [],
+  races: [],
 };
 
 const EMPTY_UFC = {
@@ -49,13 +53,15 @@ const EMPTY_SOCCER = {
   matches: [] as CatalogMatch[],
 };
 
+const EMPTY_F1: F1RaceCardData[] = [];
+
 export async function searchCatalog(rawQuery: string): Promise<SearchResults> {
   const query = rawQuery.trim().toLowerCase();
   if (!query) {
     return EMPTY_RESULTS;
   }
 
-  const [ufc, soccer] = await Promise.all([
+  const [ufc, soccer, races] = await Promise.all([
     searchUfcCatalog(query).catch((error: unknown) => {
       console.error("UFC search failed:", error);
       return EMPTY_UFC;
@@ -63,6 +69,10 @@ export async function searchCatalog(rawQuery: string): Promise<SearchResults> {
     searchSoccerCatalog(query).catch((error: unknown) => {
       console.error("Soccer search failed:", error);
       return EMPTY_SOCCER;
+    }),
+    searchF1Races(query).catch((error: unknown) => {
+      console.error("F1 search failed:", error);
+      return EMPTY_F1;
     }),
   ]);
 
@@ -86,6 +96,7 @@ export async function searchCatalog(rawQuery: string): Promise<SearchResults> {
     teams: soccer.teams,
     leagues: soccer.leagues,
     matches: soccer.matches,
+    races,
   };
 }
 
@@ -97,6 +108,13 @@ function promotionCatalog() {
       detail: "Mixed martial arts",
       href: "/fights",
       keywords: "ufc ultimate fighting championship mma",
+    },
+    {
+      id: "f1",
+      name: "Formula 1",
+      detail: "Grand Prix racing",
+      href: "/f1",
+      keywords: "f1 formula 1 formula one grand prix",
     },
   ];
 }
