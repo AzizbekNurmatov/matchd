@@ -4,6 +4,7 @@ import {
   fetchRaceRankings,
   fetchRaces,
   isPlanError,
+  respectRateLimit,
   type F1RaceRanking,
   type F1RaceSession,
 } from "@/lib/f1/api";
@@ -38,6 +39,7 @@ async function fetchAccessibleSeason(): Promise<F1RaceSession[]> {
 
   for (const season of seasons) {
     try {
+      await respectRateLimit();
       const rows = await fetchRaces({ season });
       if (rows.length > 0) {
         return rows;
@@ -117,25 +119,16 @@ function toSession(session: F1RaceSession): F1Session {
 
 async function attachRankings(weekends: F1RaceCardData[]) {
   const completed = weekends.filter((race) => /complete|finished/i.test(race.status));
-  let index = 0;
 
-  async function worker() {
-    while (index < completed.length) {
-      const race = completed[index];
-      index += 1;
-      if (!race) {
-        continue;
-      }
-      try {
-        const rankings = await fetchRaceRankings(Number(race.id));
-        applyRankings(race, rankings);
-      } catch (error) {
-        console.error(`F1 rankings failed for race ${race.id}:`, error);
-      }
+  for (const race of completed) {
+    try {
+      await respectRateLimit();
+      const rankings = await fetchRaceRankings(Number(race.id));
+      applyRankings(race, rankings);
+    } catch (error) {
+      console.error(`F1 rankings failed for race ${race.id}:`, error);
     }
   }
-
-  await Promise.all([worker(), worker(), worker(), worker()]);
 }
 
 function applyRankings(race: F1RaceCardData, rankings: F1RaceRanking[]) {

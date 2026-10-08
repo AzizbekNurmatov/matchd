@@ -18,8 +18,8 @@ export default async function F1Page() {
     <div>
       <Container className="py-12 sm:py-14">
         <header className="border-b border-[#CBD2D9] pb-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#475569]">
-            Formula 1{season ? ` // ${season}` : ""} // Grand Prix
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-red-600">
+            Formula 1{season ? ` · ${season}` : ""}
           </p>
           <h1 className="mt-3 font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-[#0B132B] sm:text-5xl">
             F1

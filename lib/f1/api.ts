@@ -51,6 +51,27 @@ function getApiKey(): string {
   return key;
 }
 
+const REQUEST_GAP_MS = 7_000;
+
+let lastRequestAt = 0;
+let rateLimitQueue: Promise<void> = Promise.resolve();
+
+/** Spaces Formula 1 calls so the free tier stays at or under 10 requests a minute. */
+export function respectRateLimit(): Promise<void> {
+  const turn = rateLimitQueue.then(async () => {
+    const elapsed = Date.now() - lastRequestAt;
+    if (lastRequestAt !== 0 && elapsed < REQUEST_GAP_MS) {
+      await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS - elapsed));
+    }
+    lastRequestAt = Date.now();
+  });
+  rateLimitQueue = turn.then(
+    () => undefined,
+    () => undefined,
+  );
+  return turn;
+}
+
 export function isPlanError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return /free plan|do not have access|plan/i.test(message);
@@ -83,6 +104,7 @@ async function f1Get<T>(
     }
     if (page > 1) {
       url.searchParams.set("page", String(page));
+      await respectRateLimit();
     }
 
     const response = await fetch(url, {
