@@ -107,36 +107,102 @@ async function persistIfEmpty(races: F1RaceCardData[]) {
       return;
     }
 
-    const { error: upsertError } = await admin.from("f1_races").upsert(
-      races.map((race) => ({
-        id: race.id,
-        season: race.season,
-        name: race.name,
-        circuit: race.circuitName,
-        circuit_name: race.circuitName,
-        circuit_image: race.circuitImage,
-        country: race.country,
-        date: race.startsAt,
-        status: race.status,
-        winner: race.winnerDriver
-          ? {
-              driver: race.winnerDriver,
-              team: race.winnerTeam,
-              image: race.winnerDriverImage,
-            }
-          : null,
-        constructor_name: race.winnerTeam,
-        driver_names: race.drivers.join(", "),
-        sessions: race.sessions as unknown as Json,
-      })),
-      { onConflict: "id" },
-    );
+    const rows = races.flatMap((race) => {
+      const row = toRaceRow(race);
+      return row ? [row] : [];
+    });
+    if (rows.length === 0) {
+      return;
+    }
+
+    const { error: upsertError } = await admin
+      .from("f1_races")
+      .upsert(rows, { onConflict: "id" });
     if (upsertError) {
       console.error("Error saving F1 races:", upsertError.message);
     }
   } catch (error) {
     console.error("F1 persist skipped:", error);
   }
+}
+
+function toRaceRow(race: F1RaceCardData): F1RaceRow | null {
+  const id = textOrNull(race.id);
+  const name = textOrNull(race.name);
+  const date = textOrNull(race.startsAt);
+  if (!id || !name || !date || !Number.isFinite(race.season)) {
+    return null;
+  }
+  if (Number.isNaN(Date.parse(date))) {
+    return null;
+  }
+
+  return {
+    id,
+    season: race.season,
+    name,
+    circuit: textOrNull(race.circuitName),
+    date,
+    status: textOrNull(race.status),
+    winner: toWinner(race),
+    sessions: toSessions(race.sessions),
+  };
+}
+
+type F1RaceRow = {
+  id: string;
+  season: number;
+  name: string;
+  circuit: string | null;
+  date: string;
+  status: string | null;
+  winner: Json | null;
+  sessions: Json;
+};
+
+function toWinner(race: F1RaceCardData): Json | null {
+  const driver = textOrNull(race.winnerDriver);
+  if (!driver) {
+    return null;
+  }
+
+  const winner: { [key: string]: Json } = { driver };
+  const team = textOrNull(race.winnerTeam);
+  const image = textOrNull(race.winnerDriverImage);
+  if (team) {
+    winner.team = team;
+  }
+  if (image) {
+    winner.image = image;
+  }
+  return winner;
+}
+
+function toSessions(sessions: F1RaceCardData["sessions"]): Json {
+  return sessions.flatMap((session) => {
+    const id = textOrNull(session.id);
+    const startsAt = textOrNull(session.startsAt);
+    if (!id || !startsAt || Number.isNaN(Date.parse(startsAt))) {
+      return [];
+    }
+
+    const entry: { [key: string]: Json } = {
+      id,
+      type: textOrNull(session.type) ?? "Session",
+      label: textOrNull(session.label) ?? textOrNull(session.type) ?? "Session",
+      startsAt,
+    };
+    const status = textOrNull(session.status);
+    if (status) {
+      entry.status = status;
+    }
+    return [entry];
+  });
+}
+
+function textOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function isMissingTable(message: string) {

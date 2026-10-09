@@ -397,16 +397,6 @@ export type Database = {
           winner: Json | null;
           sessions: Json;
           created_at: string;
-          circuit_image: string | null;
-          circuit_name: string | null;
-          country: string | null;
-          city: string | null;
-          round: number | null;
-          timezone: string | null;
-          driver_names: string | null;
-          constructor_name: string | null;
-          laps: number | null;
-          fastest_lap: string | null;
         };
         Insert: {
           id: string;
@@ -418,16 +408,6 @@ export type Database = {
           winner?: Json | null;
           sessions?: Json;
           created_at?: string;
-          circuit_image?: string | null;
-          circuit_name?: string | null;
-          country?: string | null;
-          city?: string | null;
-          round?: number | null;
-          timezone?: string | null;
-          driver_names?: string | null;
-          constructor_name?: string | null;
-          laps?: number | null;
-          fastest_lap?: string | null;
         };
         Update: {
           id?: string;
@@ -439,16 +419,6 @@ export type Database = {
           winner?: Json | null;
           sessions?: Json;
           created_at?: string;
-          circuit_image?: string | null;
-          circuit_name?: string | null;
-          country?: string | null;
-          city?: string | null;
-          round?: number | null;
-          timezone?: string | null;
-          driver_names?: string | null;
-          constructor_name?: string | null;
-          laps?: number | null;
-          fastest_lap?: string | null;
         };
         Relationships: [];
       };

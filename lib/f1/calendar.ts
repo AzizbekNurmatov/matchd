@@ -112,8 +112,8 @@ function toSession(session: F1RaceSession): F1Session {
     id: String(session.id),
     type,
     label: SESSION_LABELS[type] ?? type,
-    startsAt: session.date ?? "",
-    status: session.status?.trim() || "",
+    startsAt: session.date?.trim() || "",
+    status: session.status?.trim() || "Scheduled",
   };
 }
 
