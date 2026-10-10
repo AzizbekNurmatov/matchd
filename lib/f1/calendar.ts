@@ -4,6 +4,7 @@ import {
   fetchRaceRankings,
   fetchRaces,
   isPlanError,
+  isRateLimitError,
   respectRateLimit,
   type F1RaceRanking,
   type F1RaceSession,
@@ -23,39 +24,36 @@ const SESSION_LABELS: Record<string, string> = {
   Sprint: "Sprint",
 };
 
-export async function fetchSeasonCalendar(): Promise<F1RaceCardData[]> {
-  const sessions = await fetchAccessibleSeason();
+export class F1SeasonUnavailableError extends Error {
+  constructor(readonly season: number) {
+    super(
+      `The ${season} Formula 1 calendar is not available on the current API plan.`,
+    );
+    this.name = "F1SeasonUnavailableError";
+  }
+}
+
+export async function fetchSeasonCalendar(
+  season = new Date().getFullYear(),
+): Promise<F1RaceCardData[]> {
+  const sessions = await fetchSeason(season);
   const weekends = groupWeekends(sessions);
   await attachRankings(weekends);
   return weekends.sort(
-    (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
+    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
   );
 }
 
-async function fetchAccessibleSeason(): Promise<F1RaceSession[]> {
-  const year = new Date().getUTCFullYear();
-  const seasons = [...new Set([year, year - 1, 2024, 2023, 2022])];
-  let lastError: unknown = null;
-
-  for (const season of seasons) {
-    try {
-      await respectRateLimit();
-      const rows = await fetchRaces({ season });
-      if (rows.length > 0) {
-        return rows;
-      }
-    } catch (error) {
-      lastError = error;
-      if (!isPlanError(error)) {
-        throw error;
-      }
+async function fetchSeason(season: number): Promise<F1RaceSession[]> {
+  try {
+    await respectRateLimit();
+    return await fetchRaces({ season });
+  } catch (error) {
+    if (isPlanError(error) || isRateLimitError(error)) {
+      throw new F1SeasonUnavailableError(season);
     }
+    throw error;
   }
-
-  if (lastError) {
-    throw lastError;
-  }
-  return [];
 }
 
 function groupWeekends(rows: F1RaceSession[]): F1RaceCardData[] {

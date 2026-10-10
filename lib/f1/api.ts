@@ -77,6 +77,11 @@ export function isPlanError(error: unknown): boolean {
   return /free plan|do not have access|plan/i.test(message);
 }
 
+export function isRateLimitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /rate limit|too many requests|\b429\b/i.test(message);
+}
+
 export async function fetchRaces(
   params: Record<string, string | number | undefined>,
 ): Promise<F1RaceSession[]> {

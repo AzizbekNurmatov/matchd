@@ -4,26 +4,27 @@ import type { F1RaceCardData } from "@/lib/f1/types";
 import { cn } from "@/lib/utils";
 
 export function F1RaceCard({ race }: { race: F1RaceCardData }) {
-  const finished = /complete|finished/i.test(race.status);
+  const finished = isFinishedStatus(race.status);
+  const hasWinner = Boolean(race.winnerDriver);
 
   return (
-    <article className="overflow-hidden rounded-lg border border-[#BAC2CB] border-t-2 border-t-red-600 bg-white shadow-card">
-      <header className="border-b border-slate-200/80 bg-slate-50 px-6 py-4">
-        <div className="flex items-start justify-between gap-3">
+    <article className="overflow-hidden rounded-lg border border-[#BAC2CB] bg-white shadow-card">
+      <header className="bg-red-600 px-6 py-5 text-white">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-red-100">
               Grand Prix
             </p>
-            <h2 className="mt-1 truncate text-lg font-bold tracking-tight text-slate-900">
+            <h2 className="mt-1.5 truncate text-xl font-bold tracking-tight">
               {race.name}
             </h2>
-            <p className="mt-1 truncate text-xs text-slate-500">{race.circuitName}</p>
+            <p className="mt-1 truncate text-sm text-red-100">{race.circuitName}</p>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <div className="flex shrink-0 flex-col items-end gap-2">
             <StatusBadge status={race.status} finished={finished} />
             <time
               dateTime={race.startsAt}
-              className="text-xs font-semibold tabular-nums text-slate-600"
+              className="text-xs font-semibold tabular-nums text-red-50"
             >
               {formatUtcEventDate(race.startsAt)}
             </time>
@@ -31,46 +32,66 @@ export function F1RaceCard({ race }: { race: F1RaceCardData }) {
         </div>
       </header>
 
-      <div className="px-6 py-4">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          Weekend
-        </p>
-        <ol className="mt-2 divide-y divide-slate-100">
-          {race.sessions.map((session) => (
-            <li
-              key={session.id}
-              className="flex items-center justify-between gap-3 py-1.5 text-xs"
-            >
-              <span className="font-medium text-slate-700">{session.label}</span>
-              <time
-                dateTime={session.startsAt}
-                className="shrink-0 font-semibold tabular-nums text-slate-500"
+      <div className="space-y-5 px-6 py-5">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Weekend
+          </p>
+          <ol className="mt-3 space-y-2">
+            {race.sessions.map((session) => (
+              <li
+                key={session.id}
+                className="flex items-baseline justify-between gap-4 text-sm"
               >
-                {formatSessionTime(session.startsAt)}
-              </time>
-            </li>
-          ))}
-        </ol>
-
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-slate-900 text-xs font-bold tracking-wider text-white">
-              P1
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-slate-900">
-                {race.winnerDriver ?? "Winner TBA"}
-              </p>
-              {race.winnerTeam ? (
-                <p className="truncate text-xs text-slate-600">{race.winnerTeam}</p>
-              ) : null}
-            </div>
-          </div>
-          <F1RaceStars raceId={race.id} value={race.userRating} />
+                <span className="font-medium text-slate-800">{session.label}</span>
+                <time
+                  dateTime={session.startsAt}
+                  className="shrink-0 text-xs font-semibold tabular-nums text-slate-500"
+                >
+                  {formatSessionTime(session.startsAt)}
+                </time>
+              </li>
+            ))}
+          </ol>
         </div>
+
+        {finished && hasWinner ? (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-slate-900 text-xs font-bold tracking-wider text-white">
+                P1
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-slate-900">
+                  {race.winnerDriver}
+                </p>
+                {race.winnerTeam ? (
+                  <p className="truncate text-xs text-slate-600">{race.winnerTeam}</p>
+                ) : null}
+              </div>
+            </div>
+            <F1RaceStars raceId={race.id} value={race.userRating} />
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {finished ? "Result" : "Upcoming Session"}
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-900">
+                {finished ? "Result pending" : "Race Scheduled"}
+              </p>
+            </div>
+            <F1RaceStars raceId={race.id} value={race.userRating} />
+          </div>
+        )}
       </div>
     </article>
   );
+}
+
+function isFinishedStatus(status: string) {
+  return /complete|finished/i.test(status);
 }
 
 function StatusBadge({ status, finished }: { status: string; finished: boolean }) {
@@ -79,16 +100,19 @@ function StatusBadge({ status, finished }: { status: string; finished: boolean }
       className={cn(
         "rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
         finished
-          ? "border-red-200 bg-red-50 text-red-600"
-          : "border-slate-200 bg-white text-slate-600",
+          ? "border-white/30 bg-white/15 text-white"
+          : "border-white bg-white text-red-600",
       )}
     >
-      {status || "Scheduled"}
+      {finished ? status || "Completed" : "Race Scheduled"}
     </span>
   );
 }
 
 function formatSessionTime(iso: string): string {
+  if (!iso || Number.isNaN(Date.parse(iso))) {
+    return "TBC";
+  }
   const label = new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
     hour: "2-digit",
