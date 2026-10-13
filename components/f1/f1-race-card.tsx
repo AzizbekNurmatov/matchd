@@ -8,84 +8,77 @@ export function F1RaceCard({ race }: { race: F1RaceCardData }) {
   const hasWinner = Boolean(race.winnerDriver);
 
   return (
-    <article className="overflow-hidden rounded-lg border border-[#BAC2CB] bg-white shadow-card">
-      <header className="bg-red-600 px-6 py-5 text-white">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-red-100">
-              Grand Prix
-            </p>
-            <h2 className="mt-1.5 truncate text-xl font-bold tracking-tight">
-              {race.name}
-            </h2>
-            <p className="mt-1 truncate text-sm text-red-100">{race.circuitName}</p>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <StatusBadge status={race.status} finished={finished} />
-            <time
-              dateTime={race.startsAt}
-              className="text-xs font-semibold tabular-nums text-red-50"
-            >
-              {formatUtcEventDate(race.startsAt)}
-            </time>
-          </div>
+    <article className="overflow-hidden rounded-lg border border-slate-800 border-l-4 border-l-red-600 bg-slate-900 shadow-card">
+      <header className="flex items-start justify-between gap-4 px-6 pt-5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-red-500">
+            Grand Prix
+          </p>
+          <h2 className="mt-1.5 truncate text-xl font-semibold tracking-tight text-white">
+            {race.name}
+          </h2>
+          <p className="mt-1 truncate text-sm text-slate-400">{race.circuitName}</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <StatusBadge finished={finished} />
+          <time
+            dateTime={race.startsAt}
+            className="text-xs font-medium tabular-nums text-slate-500"
+          >
+            {formatUtcEventDate(race.startsAt)}
+          </time>
         </div>
       </header>
 
-      <div className="space-y-5 px-6 py-5">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Weekend
-          </p>
-          <ol className="mt-3 space-y-2">
-            {race.sessions.map((session) => (
-              <li
-                key={session.id}
-                className="flex items-baseline justify-between gap-4 text-sm"
-              >
-                <span className="font-medium text-slate-800">{session.label}</span>
-                <time
-                  dateTime={session.startsAt}
-                  className="shrink-0 text-xs font-semibold tabular-nums text-slate-500"
-                >
+      <div className="px-6 pt-5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Weekend
+        </p>
+        <ol className="mt-3 flex flex-wrap gap-2">
+          {race.sessions.map((session) => (
+            <li key={session.id}>
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-300">
+                {session.label}
+                <time dateTime={session.startsAt} className="tabular-nums text-slate-500">
                   {formatSessionTime(session.startsAt)}
                 </time>
-              </li>
-            ))}
-          </ol>
-        </div>
+              </span>
+            </li>
+          ))}
+        </ol>
 
         {finished && hasWinner ? (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-slate-900 text-xs font-bold tracking-wider text-white">
-                P1
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-900">
-                  {race.winnerDriver}
-                </p>
-                {race.winnerTeam ? (
-                  <p className="truncate text-xs text-slate-600">{race.winnerTeam}</p>
-                ) : null}
-              </div>
+          <div className="mt-5 flex items-center gap-3 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-3 text-amber-200">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-amber-400/15 text-[11px] font-bold tracking-wider text-amber-300">
+              P1
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-amber-100">
+                {race.winnerDriver}
+              </p>
+              {race.winnerTeam ? (
+                <p className="truncate text-xs text-amber-300/80">{race.winnerTeam}</p>
+              ) : null}
             </div>
-            <F1RaceStars raceId={race.id} value={race.userRating} />
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {finished ? "Result" : "Upcoming Session"}
-              </p>
-              <p className="mt-1 text-sm font-bold text-slate-900">
-                {finished ? "Result pending" : "Race Scheduled"}
-              </p>
-            </div>
-            <F1RaceStars raceId={race.id} value={race.userRating} />
+          <div className="mt-5 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {finished ? "Result" : "Upcoming Session"}
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-200">
+              {finished ? "Result pending" : "Race Scheduled"}
+            </p>
           </div>
         )}
       </div>
+
+      <footer className="mt-5 flex items-center justify-between gap-4 border-t border-slate-800 px-6 py-3.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Rate this race
+        </p>
+        <F1RaceStars raceId={race.id} value={race.userRating} />
+      </footer>
     </article>
   );
 }
@@ -94,17 +87,15 @@ function isFinishedStatus(status: string) {
   return /complete|finished/i.test(status);
 }
 
-function StatusBadge({ status, finished }: { status: string; finished: boolean }) {
+function StatusBadge({ finished }: { finished: boolean }) {
   return (
     <span
       className={cn(
-        "rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-        finished
-          ? "border-white/30 bg-white/15 text-white"
-          : "border-white bg-white text-red-600",
+        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+        finished ? "bg-slate-800 text-slate-300" : "bg-slate-800 text-slate-400",
       )}
     >
-      {finished ? status || "Completed" : "Race Scheduled"}
+      {finished ? "Completed" : "Scheduled"}
     </span>
   );
 }
@@ -113,12 +104,11 @@ function formatSessionTime(iso: string): string {
   if (!iso || Number.isNaN(Date.parse(iso))) {
     return "TBC";
   }
-  const label = new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
     timeZone: "UTC",
   }).format(new Date(iso));
-  return `${label} UTC`;
 }

@@ -94,11 +94,11 @@ export function F1RaceStars({ raceId, value }: F1RaceStarsProps) {
             );
           })}
         </div>
-        <span className="w-8 text-right text-xs font-semibold tabular-nums text-[#D97706]">
+        <span className="w-8 text-right text-xs font-semibold tabular-nums text-amber-300">
           {shown > 0 ? formatRating(shown) : ""}
         </span>
       </div>
-      {error ? <p className="max-w-40 text-right text-[11px] text-red-700">{error}</p> : null}
+      {error ? <p className="max-w-40 text-right text-[11px] text-red-300">{error}</p> : null}
       <span className="sr-only">
         Ratings run from {RATING_MIN} to {RATING_MAX} in steps of {RATING_STEP}.
       </span>
