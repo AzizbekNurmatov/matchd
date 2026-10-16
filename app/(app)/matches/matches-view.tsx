@@ -123,7 +123,7 @@ export function MatchesView({
                 className={cn(
                   "cursor-pointer pb-2 font-mono text-xs uppercase tracking-wider",
                   active
-                    ? "border-b-2 border-[#9A3412] text-[#0F172A]"
+                    ? "border-b-2 border-emerald-600 text-[#0F172A]"
                     : "text-[#475569] hover:text-[#0F172A]",
                 )}
               >
@@ -139,7 +139,7 @@ export function MatchesView({
               className={cn(
                 "cursor-pointer pb-2 font-mono text-xs uppercase tracking-wider",
                 activeTab === "international"
-                  ? "border-b-2 border-[#9A3412] text-[#0F172A]"
+                  ? "border-b-2 border-emerald-600 text-[#0F172A]"
                   : "text-[#475569] hover:text-[#0F172A]",
               )}
             >
@@ -156,8 +156,8 @@ export function MatchesView({
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search teams"
               aria-label="Search teams"
-              className={cn(
-                "h-9 w-44 rounded-sm border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:outline-none md:w-52 [&::-webkit-search-cancel-button]:hidden",
+                className={cn(
+                "h-9 w-44 rounded-sm border border-slate-800 bg-slate-900 text-xs text-slate-100 placeholder:text-slate-500 transition-colors focus:border-slate-600 focus:outline-none md:w-52 [&::-webkit-search-cancel-button]:hidden",
                 searchQuery ? "py-0 pl-3 pr-7" : "px-3",
               )}
             />
@@ -188,25 +188,25 @@ export function MatchesView({
       {displayedMatches.length === 0 ? (
         <div
           className={cn(
-            "mt-8 border border-[#CBD2D9] bg-[#F4F6F8] px-5 py-12 transition-opacity",
+            "mt-8 rounded-lg border border-slate-800 bg-slate-900 px-5 py-12 transition-opacity",
             isPending && "opacity-70",
           )}
         >
           {searchActive ? (
             <div className="flex flex-col items-start gap-3">
-              <p className="text-sm text-[#475569]">
+              <p className="text-sm text-slate-300">
                 No matches found for &quot;{searchQuery}&quot;
               </p>
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="cursor-pointer text-xs text-[#9A3412] transition-colors hover:text-[#0F172A]"
+                className="cursor-pointer text-xs text-amber-300 transition-colors hover:text-amber-200"
               >
                 Clear search
               </button>
             </div>
           ) : (
-            <p className="font-mono text-xs uppercase tracking-widest text-[#475569]">
+            <p className="font-mono text-xs uppercase tracking-widest text-slate-400">
               {emptyCopy(activeTab, initialLeague, supportedLeagues)}
             </p>
           )}
@@ -260,14 +260,14 @@ function LeagueDropdown({
     >
       <summary
         aria-label="League filter"
-        className="flex cursor-pointer list-none items-center gap-2 border border-[#CBD2D9] bg-[#E8ECEE] px-3 py-1.5 font-mono text-xs uppercase text-[#0F172A] [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-2 rounded-sm border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs uppercase text-slate-100 [&::-webkit-details-marker]:hidden"
       >
         <span>{current}</span>
         <svg
           viewBox="0 0 16 16"
           fill="none"
           aria-hidden="true"
-          className="h-3 w-3 text-[#475569] transition-transform group-open:rotate-180"
+          className="h-3 w-3 text-slate-400 transition-transform group-open:rotate-180"
         >
           <path
             d="M4 6l4 4 4-4"
@@ -277,7 +277,7 @@ function LeagueDropdown({
           />
         </svg>
       </summary>
-      <div className="absolute right-0 z-20 mt-1 min-w-[13rem] border border-[#CBD2D9] bg-[#E8ECEE] py-1">
+      <div className="absolute right-0 z-20 mt-1 min-w-[13rem] rounded-sm border border-slate-800 bg-slate-900 py-1">
         {leagues.map((item) => {
           const active = item.id === league;
           const href = matchesHref(tab, item.id);
@@ -295,8 +295,8 @@ function LeagueDropdown({
               className={cn(
                 "block px-3 py-2 font-mono text-xs uppercase tracking-wider transition-colors",
                 active
-                  ? "bg-[#F4F6F8] text-[#0F172A]"
-                  : "text-[#475569] hover:bg-[#F4F6F8] hover:text-[#0F172A]",
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white",
               )}
             >
               {item.label}

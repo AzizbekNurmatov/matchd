@@ -52,29 +52,40 @@ export function MatchCardHeader({
   league,
   leagueCode,
   kickoffAt,
+  variant = "light",
 }: {
   league: string | null;
   leagueCode?: string | null;
   kickoffAt: string;
+  variant?: "light" | "dark";
 }) {
   const name = league ?? "Match";
   const code = leagueCode ?? null;
   const isMls = leagueBadgeLabel(name, code) === "MLS";
+  const dark = variant === "dark";
 
   return (
-    <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+    <div
+      className={`mb-2 flex items-center justify-between gap-2 border-b pb-2.5 ${
+        dark ? "border-slate-800" : "border-slate-100"
+      }`}
+    >
       <span
-        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border uppercase tracking-wider ${
-          isMls
-            ? "border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-800"
-            : `px-2.5 py-1 text-[11px] font-semibold text-[#0F172A] ${leagueBadgeClass(name, code)}`
+        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full uppercase tracking-wider ${
+          dark
+            ? "bg-slate-800 px-2.5 py-0.5 text-[10px] font-semibold text-slate-300"
+            : isMls
+              ? "border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-800"
+              : `border px-2.5 py-1 text-[11px] font-semibold text-[#0F172A] ${leagueBadgeClass(name, code)}`
         }`}
       >
         {leagueBadgeLabel(name, code)}
       </span>
       <time
         dateTime={kickoffAt}
-        className="shrink-0 text-xs font-semibold tabular-nums text-[#334155]"
+        className={`shrink-0 text-xs font-semibold tabular-nums ${
+          dark ? "text-slate-400" : "text-[#334155]"
+        }`}
       >
         {formatMatchCardDate(kickoffAt)}
       </time>

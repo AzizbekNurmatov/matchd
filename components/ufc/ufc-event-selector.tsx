@@ -45,7 +45,7 @@ export function UfcEventSelector({
         <select
           value={selectedId}
           onChange={(event) => openEvent(event.target.value)}
-          className="w-full rounded border border-[#CBD5E1] bg-white px-4 py-2.5 font-semibold text-slate-800"
+          className="w-full rounded-md border border-slate-800 bg-slate-900 px-4 py-2.5 font-semibold text-white"
         >
           <EventGroup label="2026 Season" events={season} />
           <EventGroup label="Archive" events={archive} />
@@ -87,7 +87,7 @@ function CycleLink({
 }) {
   if (!event) {
     return (
-      <span className="shrink-0 px-2 py-2 text-sm font-semibold text-slate-400">
+      <span className="shrink-0 px-2 py-2 text-sm font-semibold text-slate-500">
         {label}
       </span>
     );
@@ -97,7 +97,7 @@ function CycleLink({
     <Link
       href={`/fights?event=${event.id}`}
       scroll={false}
-      className="shrink-0 px-2 py-2 text-sm font-semibold text-slate-700 hover:text-[#B45309]"
+      className="shrink-0 px-2 py-2 text-sm font-semibold text-slate-300 hover:text-amber-300"
     >
       {label}
     </Link>

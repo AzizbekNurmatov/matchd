@@ -21,6 +21,7 @@ type ReviewFormProps = {
   placeholder?: string;
   onSave?: (body: string) => Promise<ReviewActionResult>;
   onDelete?: () => Promise<ReviewActionResult>;
+  tone?: "light" | "dark";
 };
 
 export function ReviewForm({
@@ -30,6 +31,7 @@ export function ReviewForm({
   placeholder = "What did you make of this match?",
   onSave,
   onDelete,
+  tone = "light",
 }: ReviewFormProps) {
   const router = useRouter();
   const [body, setBody] = useState(existingBody ?? "");
@@ -40,6 +42,7 @@ export function ReviewForm({
     null,
   );
   const isEditing = Boolean(existingBody);
+  const dark = tone === "dark";
 
   useEffect(() => {
     setBody(existingBody ?? "");
@@ -102,7 +105,12 @@ export function ReviewForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-md border border-border bg-[#F4F6F8] px-4 py-3 text-left text-sm text-[#475569] transition-colors hover:border-[#94A3B8] hover:text-[#0F172A]"
+        className={cn(
+          "w-full rounded-md border px-4 py-3 text-left text-sm transition-colors",
+          dark
+            ? "border-slate-700 bg-slate-950/70 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+            : "border-border bg-[#F4F6F8] text-[#475569] hover:border-[#94A3B8] hover:text-[#0F172A]",
+        )}
       >
         Write a review...
       </button>
@@ -130,13 +138,14 @@ export function ReviewForm({
         rows={6}
         placeholder={placeholder}
         className={cn(
-          "w-full resize-y rounded-md border border-border bg-[#F4F6F8] px-3 py-3 text-sm leading-relaxed text-[#0F172A]",
-          "outline-none placeholder:text-[#475569] focus:border-[#9A3412]",
-          "disabled:opacity-70",
+          "w-full resize-y rounded-md border px-3 py-3 text-sm leading-relaxed outline-none disabled:opacity-70",
+          dark
+            ? "border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-500 focus:border-amber-500"
+            : "border-border bg-[#F4F6F8] text-[#0F172A] placeholder:text-[#475569] focus:border-[#9A3412]",
         )}
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-[#475569]">
+        <p className={cn("text-xs", dark ? "text-slate-500" : "text-[#475569]")}>
           {body.length}/{REVIEW_MAX_LENGTH}
         </p>
         <div className="flex items-center gap-3">
@@ -153,7 +162,12 @@ export function ReviewForm({
                 setError(null);
               }}
               disabled={isPending}
-              className="text-sm text-[#475569] hover:text-[#0F172A] disabled:opacity-70"
+              className={cn(
+                "text-sm disabled:opacity-70",
+                dark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-[#475569] hover:text-[#0F172A]",
+              )}
             >
               Cancel
             </button>
@@ -163,7 +177,12 @@ export function ReviewForm({
               type="button"
               onClick={remove}
               disabled={isPending}
-              className="text-sm text-[#475569] hover:text-red-700 disabled:opacity-70"
+              className={cn(
+                "text-sm disabled:opacity-70",
+                dark
+                  ? "text-slate-400 hover:text-red-300"
+                  : "text-[#475569] hover:text-red-700",
+              )}
             >
               {pendingAction === "delete" ? "Deleting..." : "Delete"}
             </button>
@@ -171,7 +190,12 @@ export function ReviewForm({
           <button
             type="submit"
             disabled={isPending}
-            className="h-9 rounded-md bg-[#0F172A] px-4 text-sm font-medium text-[#F8FAFC] hover:bg-[#1E293B] disabled:opacity-70"
+            className={cn(
+              "h-9 rounded-md px-4 text-sm font-medium disabled:opacity-70",
+              dark
+                ? "bg-amber-400 text-slate-950 hover:bg-amber-300"
+                : "bg-[#0F172A] text-[#F8FAFC] hover:bg-[#1E293B]",
+            )}
           >
             {pendingAction === "save"
               ? "Saving..."
@@ -181,7 +205,11 @@ export function ReviewForm({
           </button>
         </div>
       </div>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className={cn("text-sm", dark ? "text-red-300" : "text-red-700")}>
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

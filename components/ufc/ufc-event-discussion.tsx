@@ -20,9 +20,9 @@ export function UfcEventDiscussion({
   const ownReview = reviews.find((review) => review.userId === currentUserId);
 
   return (
-    <section className="mt-4 border-t border-slate-100 pt-5">
-      <h3 className="text-xs uppercase tracking-[0.18em] text-[#475569]">
-        Event Discussion & Reviews
+    <section>
+      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Event discussion
       </h3>
       <div className="mt-4">
         {isLoggedIn ? (
@@ -32,12 +32,13 @@ export function UfcEventDiscussion({
             placeholder="What did you make of this card?"
             onSave={(body) => upsertUfcReview(eventId, body)}
             onDelete={() => deleteUfcReview(eventId)}
+            tone="dark"
           />
         ) : (
-          <p className="text-sm text-[#475569]">
+          <p className="text-sm text-slate-400">
             <Link
               href="/login"
-              className="text-[#0F172A] underline decoration-border hover:decoration-[#9A3412]"
+              className="text-white underline decoration-slate-600 hover:decoration-amber-400"
             >
               Log in
             </Link>{" "}
@@ -52,6 +53,7 @@ export function UfcEventDiscussion({
           currentUserId={currentUserId}
           onSave={(body) => upsertUfcReview(eventId, body)}
           onDelete={() => deleteUfcReview(eventId)}
+          tone="dark"
         />
       </div>
     </section>

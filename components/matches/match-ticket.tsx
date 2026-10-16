@@ -11,12 +11,13 @@ export function MatchTicket({ match }: { match: CatalogMatch }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group flex flex-col justify-between rounded-none border border-[#BAC2CB] bg-white p-4 shadow-card transition-all hover:border-[#94A3B8]"
+      className="group flex flex-col justify-between rounded-lg border border-slate-800 border-l-4 border-l-emerald-500 bg-slate-900 p-4 shadow-card transition-colors hover:border-slate-600 hover:border-l-emerald-500"
     >
       <MatchCardHeader
         league={match.competition?.name ?? null}
         leagueCode={match.competition?.short_name ?? null}
         kickoffAt={match.kickoff_at}
+        variant="dark"
       />
 
       <div className="flex flex-col gap-3 py-4">
@@ -24,16 +25,18 @@ export function MatchTicket({ match }: { match: CatalogMatch }) {
         <TeamScoreRow team={match.away_team} score={awayScore} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[#E2E8F0] pt-3">
-        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-[#475569]">
-          <span>{footerStatus(match)}</span>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-800 pt-3">
+        <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-300">
+            {footerStatus(match)}
+          </span>
           {finished && match.averageRating != null ? (
-            <span className="text-[#9A3412]">
+            <span className="text-amber-300">
               ★ {formatRating(match.averageRating)}
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-xs uppercase tracking-wider text-[#B45309] transition-colors group-hover:text-[#0B132B]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-amber-300 transition-colors group-hover:text-amber-200">
           {finished ? "Rate & Log →" : "Preview →"}
         </span>
       </div>
@@ -58,15 +61,15 @@ function TeamScoreRow({
             className="h-5 w-5 shrink-0 object-contain"
           />
         ) : (
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-[#E4E7EB] font-mono text-[9px] text-[#475569]">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-slate-800 font-mono text-[9px] text-slate-400">
             {(team?.name ?? "?").slice(0, 1)}
           </span>
         )}
-        <span className="truncate text-sm font-medium text-[#0B132B]">
+        <span className="truncate text-sm font-medium text-white">
           {team?.name ?? "TBD"}
         </span>
       </div>
-      <span className="shrink-0 font-mono text-xl font-bold text-[#0B132B]">
+      <span className="shrink-0 font-mono text-xl font-bold text-white">
         {score}
       </span>
     </div>

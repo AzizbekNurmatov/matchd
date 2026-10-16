@@ -70,6 +70,8 @@ export function UfcFightStars({ fightId, eventId, value }: UfcFightStarsProps) {
                 className={cn(
                   "relative transition-transform duration-200 ease-out motion-reduce:transition-none",
                   hovered && "z-10 scale-110",
+                  shown > index &&
+                    "drop-shadow-[0_0_6px_rgba(217,119,6,0.45)]",
                 )}
               >
                 <StarIcon
@@ -99,11 +101,11 @@ export function UfcFightStars({ fightId, eventId, value }: UfcFightStarsProps) {
             );
           })}
         </div>
-        <span className="w-7 text-right text-xs font-semibold tabular-nums text-[#D97706] transition-colors duration-200">
+        <span className="w-7 text-right text-xs font-semibold tabular-nums text-amber-300 transition-colors duration-200">
           {shown > 0 ? formatRating(shown) : ""}
         </span>
       </div>
-      {error ? <p className="text-[11px] text-red-700">{error}</p> : null}
+      {error ? <p className="text-[11px] text-red-300">{error}</p> : null}
       <span className="sr-only">
         Ratings run from {RATING_MIN} to {RATING_MAX} in steps of {RATING_STEP}.
       </span>
