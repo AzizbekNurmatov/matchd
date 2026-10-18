@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { F1RaceCard } from "@/components/f1/f1-race-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { F1RaceCardData } from "@/lib/f1/types";
 import { cn } from "@/lib/utils";
 
@@ -39,11 +40,13 @@ export function F1RaceList({
       </div>
 
       {races.length === 0 ? (
-        <p className="mt-8 text-sm text-[#475569]">
-          {tab === "upcoming"
-            ? "No upcoming Grands Prix on the calendar."
-            : "No completed Grands Prix yet."}
-        </p>
+        <EmptyState
+          title={
+            tab === "upcoming"
+              ? "No upcoming races found."
+              : "No past races found."
+          }
+        />
       ) : (
         <div className="mt-6 flex flex-col gap-6">
           {races.map((race) => (

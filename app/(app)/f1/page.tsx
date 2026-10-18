@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { F1RaceList } from "@/components/f1/f1-race-list";
+import { EmptyState } from "@/components/ui/empty-state";
 import { listF1Races } from "@/lib/f1/queries";
 
 export const metadata: Metadata = {
@@ -33,13 +34,9 @@ export default async function F1Page() {
         </header>
 
         {!listing ? (
-          <p className="mt-8 text-sm text-[#475569]">
-            The Formula 1 calendar could not be loaded.
-          </p>
+          <EmptyState title="The Formula 1 calendar could not be loaded." />
         ) : total === 0 ? (
-          <p className="mt-8 text-sm text-[#475569]">
-            No Grand Prix weekends in the {season} calendar yet.
-          </p>
+          <EmptyState title={`No races found for the ${season} season.`} />
         ) : (
           <F1RaceList
             completed={listing.completed}

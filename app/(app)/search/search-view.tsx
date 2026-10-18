@@ -5,6 +5,8 @@ import Link from "next/link";
 import { F1RaceCard } from "@/components/f1/f1-race-card";
 import { MatchTicket } from "@/components/matches/match-ticket";
 import { UfcEventCard } from "@/components/ufc/ufc-event-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MatchCardSkeletonList } from "@/components/ui/match-card-skeleton";
 import { cn } from "@/lib/utils";
 import { searchCatalogAction } from "./actions";
 
@@ -122,19 +124,31 @@ export function SearchView({ initialQuery, initialResults }: SearchViewProps) {
       {error ? <p className="mt-6 text-sm text-red-700">{error}</p> : null}
 
       {!trimmed ? (
-        <p className="mt-8 text-sm text-[#475569]">
-          Search for fighters, teams, races, or matches...
-        </p>
-      ) : pending && !hasResults ? (
-        <p className="mt-8 font-mono text-xs uppercase tracking-widest text-[#475569]">
-          Searching…
-        </p>
-      ) : results && !hasResults && !pending ? (
-        <p className="mt-8 text-sm text-[#475569]">
-          No results for &quot;{trimmed}&quot;
-        </p>
+        <EmptyState
+          icon="search"
+          title="Search for fighters, teams, races, or matches..."
+        />
+      ) : pending ? (
+        <MatchCardSkeletonList count={3} />
+      ) : results && !hasResults ? (
+        <EmptyState
+          icon="search"
+          title={`No matches or fighters found for "${trimmed}"`}
+          action={
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              className="cursor-pointer text-xs text-amber-300 transition-colors hover:text-amber-200"
+            >
+              Clear search
+            </button>
+          }
+        />
       ) : results ? (
-        <div className={cn("mt-10 flex flex-col gap-12", pending && "opacity-70")}>
+        <div className="mt-10 flex flex-col gap-12">
           {results.matches.length > 0 ? (
             <section>
               <SectionLabel>Matches</SectionLabel>

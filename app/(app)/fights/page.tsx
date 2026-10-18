@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { UfcEventCard } from "@/components/ufc/ufc-event-card";
 import { UfcEventDiscussion } from "@/components/ufc/ufc-event-discussion";
 import { UfcEventSelector } from "@/components/ufc/ufc-event-selector";
+import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getUfcEventReviews, listUfcEvents } from "@/lib/ufc/queries";
 
@@ -13,12 +16,16 @@ export const metadata: Metadata = {
 export default async function FightsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ event?: string }>;
+  searchParams: Promise<{ event?: string; tab?: string }>;
 }) {
-  const { event: requestedId } = await searchParams;
+  const { event: requestedId, tab: requestedTab } = await searchParams;
   const events = await listUfcEvents();
+  const tab = requestedTab === "completed" ? "completed" : "upcoming";
+  const filtered = events.filter((event) =>
+    tab === "completed" ? isFinishedCard(event.status) : !isFinishedCard(event.status),
+  );
   const selected =
-    events.find((event) => event.id === requestedId) ?? events[0] ?? null;
+    filtered.find((event) => event.id === requestedId) ?? filtered[0] ?? null;
   const reviews = selected ? await getUfcEventReviews(selected.id) : [];
   const supabase = await createClient();
   const {
@@ -41,17 +48,33 @@ export default async function FightsPage({
           </p>
         </header>
 
-        {events.length === 0 || !selected ? (
-          <p className="mt-8 text-sm text-[#475569]">No UFC cards yet.</p>
+        <div className="mt-8 flex gap-6 border-b border-[#CBD2D9]" role="tablist">
+          <FightTab href="/fights?tab=upcoming" active={tab === "upcoming"}>
+            Upcoming
+          </FightTab>
+          <FightTab href="/fights?tab=completed" active={tab === "completed"}>
+            Completed
+          </FightTab>
+        </div>
+
+        {filtered.length === 0 || !selected ? (
+          <EmptyState
+            title={
+              tab === "upcoming"
+                ? "No upcoming fight cards found."
+                : "No past fight cards found."
+            }
+          />
         ) : (
           <>
             <UfcEventSelector
-              events={events.map((event) => ({
+              events={filtered.map((event) => ({
                 id: event.id,
                 name: event.name,
                 startsAt: event.startsAt,
               }))}
               selectedId={selected.id}
+              tab={tab}
             />
             <div className="mt-6">
               <UfcEventCard
@@ -71,5 +94,36 @@ export default async function FightsPage({
         )}
       </Container>
     </div>
+  );
+}
+
+function isFinishedCard(status: string) {
+  return /finished|complete/i.test(status);
+}
+
+function FightTab({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: string;
+}) {
+  return (
+    <Link
+      href={href}
+      scroll={false}
+      role="tab"
+      aria-selected={active}
+      className={cn(
+        "pb-2 text-xs font-semibold uppercase tracking-wider",
+        active
+          ? "border-b-2 border-amber-500 text-[#0F172A]"
+          : "text-[#475569] hover:text-[#0F172A]",
+      )}
+    >
+      {children}
+    </Link>
   );
 }

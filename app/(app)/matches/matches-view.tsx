@@ -11,6 +11,8 @@ import {
   type MouseEvent,
 } from "react";
 import { MatchTicket } from "@/components/matches/match-ticket";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MatchCardSkeletonList } from "@/components/ui/match-card-skeleton";
 import type { CatalogMatch } from "@/lib/sports-data/catalog";
 import { SUPPORTED_LEAGUES } from "@/lib/sports-data/constants";
 import { cn } from "@/lib/utils";
@@ -185,18 +187,18 @@ export function MatchesView({
         </div>
       </div>
 
-      {displayedMatches.length === 0 ? (
-        <div
-          className={cn(
-            "mt-8 rounded-lg border border-slate-800 bg-slate-900 px-5 py-12 transition-opacity",
-            isPending && "opacity-70",
-          )}
-        >
-          {searchActive ? (
-            <div className="flex flex-col items-start gap-3">
-              <p className="text-sm text-slate-300">
-                No matches found for &quot;{searchQuery}&quot;
-              </p>
+      {isPending ? (
+        <MatchCardSkeletonList count={4} accent="emerald" columns />
+      ) : displayedMatches.length === 0 ? (
+        <EmptyState
+          icon={searchActive ? "search" : "calendar"}
+          title={
+            searchActive
+              ? `No matches or fighters found for "${searchQuery.trim()}"`
+              : emptyCopy(activeTab, initialLeague, supportedLeagues)
+          }
+          action={
+            searchActive ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
@@ -204,20 +206,11 @@ export function MatchesView({
               >
                 Clear search
               </button>
-            </div>
-          ) : (
-            <p className="font-mono text-xs uppercase tracking-widest text-slate-400">
-              {emptyCopy(activeTab, initialLeague, supportedLeagues)}
-            </p>
-          )}
-        </div>
+            ) : null
+          }
+        />
       ) : (
-        <div
-          className={cn(
-            "mt-8 grid gap-3 transition-opacity sm:grid-cols-2",
-            isPending && "opacity-70",
-          )}
-        >
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
           {displayedMatches.map((match) => (
             <MatchTicket key={match.id} match={match} />
           ))}

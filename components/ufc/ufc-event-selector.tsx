@@ -15,9 +15,11 @@ const SEASON_YEAR = 2026;
 export function UfcEventSelector({
   events,
   selectedId,
+  tab = "upcoming",
 }: {
   events: UfcEventOption[];
   selectedId: string;
+  tab?: string;
 }) {
   const router = useRouter();
   const index = Math.max(
@@ -34,12 +36,12 @@ export function UfcEventSelector({
   );
 
   function openEvent(id: string) {
-    router.push(`/fights?event=${id}`, { scroll: false });
+    router.push(`/fights?tab=${tab}&event=${id}`, { scroll: false });
   }
 
   return (
     <div className="mt-8 flex flex-wrap items-center gap-2">
-      <CycleLink event={previous} label="← Previous" />
+      <CycleLink event={previous} tab={tab} label="← Previous" />
       <label className="min-w-[16rem] flex-1">
         <span className="sr-only">Choose a UFC card</span>
         <select
@@ -51,7 +53,7 @@ export function UfcEventSelector({
           <EventGroup label="Archive" events={archive} />
         </select>
       </label>
-      <CycleLink event={next} label="Next →" />
+      <CycleLink event={next} tab={tab} label="Next →" />
     </div>
   );
 }
@@ -80,9 +82,11 @@ function EventGroup({
 
 function CycleLink({
   event,
+  tab,
   label,
 }: {
   event: UfcEventOption | null;
+  tab: string;
   label: string;
 }) {
   if (!event) {
@@ -95,7 +99,7 @@ function CycleLink({
 
   return (
     <Link
-      href={`/fights?event=${event.id}`}
+      href={`/fights?tab=${tab}&event=${event.id}`}
       scroll={false}
       className="shrink-0 px-2 py-2 text-sm font-semibold text-slate-300 hover:text-amber-300"
     >
