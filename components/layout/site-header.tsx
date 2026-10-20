@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
-import { Container } from "@/components/layout/container";
+import { SiteNav } from "@/components/layout/site-nav";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 
-async function getUsername() {
+async function getAccount() {
   if (!hasSupabaseConfig()) {
     return null;
   }
@@ -20,88 +20,87 @@ async function getUsername() {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("username")
+    .select("username, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error) {
+  if (error || !profile?.username) {
     return null;
   }
 
-  return profile?.username ?? null;
+  return {
+    username: profile.username,
+    avatarUrl: profile.avatar_url,
+  };
 }
 
 export async function SiteHeader() {
-  const username = await getUsername();
+  const account = await getAccount();
+  const initials = account
+    ? account.username.slice(0, 2).toUpperCase()
+    : "";
 
   return (
-    <header className="border-b border-border bg-[#D8DCE2]/80 backdrop-blur-md">
-      <Container className="flex h-14 items-center justify-between">
-        <Link href="/" className="font-serif text-xl tracking-tight">
-          matchd
+    <header className="border-b border-[#242426] bg-[#0f0f10]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:py-5">
+        <Link href="/" className="shrink-0">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#8c887b]">
+            EST. 2026 // ARCHIVE
+          </p>
+          <span className="mt-0.5 block font-serif text-2xl tracking-tight text-[#f3efe6]">
+            matchd
+          </span>
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-muted">
-          <Link href="/matches" className="hover:text-foreground">
-            Matches
-          </Link>
-          <Link href="/fights" className="hover:text-foreground">
-            Fights
-          </Link>
-          <Link href="/f1" className="hover:text-foreground">
-            F1
-          </Link>
-          <Link
-            href="/search"
-            aria-label="Search"
-            className="inline-flex items-center hover:text-foreground"
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-              className="h-4 w-4"
-            >
-              <circle
-                cx="7"
-                cy="7"
-                r="4.25"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M10.5 10.5L13.5 13.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </Link>
-          {username ? (
+
+        <SiteNav />
+
+        <div className="flex items-center gap-4">
+          {account ? (
             <>
               <Link
-                href={`/users/${username}`}
-                className="hover:text-foreground"
+                href={`/users/${account.username}`}
+                className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
               >
-                {username}
+                {account.avatarUrl ? (
+                  <img
+                    src={account.avatarUrl}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#242426] font-mono text-[10px] text-[#f3efe6]">
+                    {initials}
+                  </span>
+                )}
+                {account.username}
               </Link>
               <form action={signOut}>
-                <button type="submit" className="hover:text-foreground">
+                <button
+                  type="submit"
+                  className="text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
+                >
                   Log out
                 </button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/login" className="hover:text-foreground">
+              <Link
+                href="/login"
+                className="text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
+              >
                 Log in
               </Link>
-              <Link href="/signup" className="text-foreground hover:text-accent">
+              <Link
+                href="/signup"
+                className="text-xs font-mono uppercase tracking-widest text-[#d4973b] transition-colors hover:text-[#f3efe6]"
+              >
                 Sign up
               </Link>
             </>
           )}
-        </nav>
-      </Container>
+        </div>
+      </div>
     </header>
   );
 }
