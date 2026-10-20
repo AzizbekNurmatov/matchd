@@ -41,10 +41,10 @@ export async function SiteHeader() {
     : "";
 
   return (
-    <header className="border-b border-[#242426] bg-[#0f0f10]">
+    <header className="border-b border-[#252b33] bg-[#181c22]/95 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:py-5">
         <Link href="/" className="shrink-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#8c887b]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d4973b]">
             EST. 2026 // ARCHIVE
           </p>
           <span className="mt-0.5 block font-serif text-2xl tracking-tight text-[#f3efe6]">
@@ -59,7 +59,7 @@ export async function SiteHeader() {
             <>
               <Link
                 href={`/users/${account.username}`}
-                className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
+                className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#8492a6] transition-colors hover:text-[#f1f5f9]"
               >
                 {account.avatarUrl ? (
                   <img
@@ -68,7 +68,7 @@ export async function SiteHeader() {
                     className="h-6 w-6 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#242426] font-mono text-[10px] text-[#f3efe6]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#252b33] font-mono text-[10px] text-[#f3efe6]">
                     {initials}
                   </span>
                 )}
@@ -77,7 +77,7 @@ export async function SiteHeader() {
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
+                  className="text-xs font-mono uppercase tracking-widest text-[#8492a6] transition-colors hover:text-[#f1f5f9]"
                 >
                   Log out
                 </button>
@@ -87,13 +87,13 @@ export async function SiteHeader() {
             <>
               <Link
                 href="/login"
-                className="text-xs font-mono uppercase tracking-widest text-[#8c887b] transition-colors hover:text-[#f3efe6]"
+                className="text-xs font-mono uppercase tracking-widest text-[#8492a6] transition-colors hover:text-[#f1f5f9]"
               >
                 Log in
               </Link>
               <Link
                 href="/signup"
-                className="text-xs font-mono uppercase tracking-widest text-[#d4973b] transition-colors hover:text-[#f3efe6]"
+                className="text-xs font-mono uppercase tracking-widest text-[#d4973b] transition-colors hover:text-[#f1f5f9]"
               >
                 Sign up
               </Link>

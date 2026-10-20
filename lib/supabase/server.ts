@@ -11,16 +11,23 @@ export async function createClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        } catch {
-          // Called from a Server Component where cookies are read-only.
-          // Middleware is responsible for refreshing the session.
-        }
-      },
+        setAll(cookiesToSet) {
+          const changed = cookiesToSet.some(
+            ({ name, value }) => cookieStore.get(name)?.value !== value,
+          );
+          if (!changed) {
+            return;
+          }
+
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Called from a Server Component where cookies are read-only.
+            // Middleware is responsible for refreshing the session.
+          }
+        },
     },
   });
 }

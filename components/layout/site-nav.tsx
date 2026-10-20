@@ -28,7 +28,7 @@ export function SiteNav() {
               "text-xs font-mono uppercase tracking-widest transition-colors",
               active
                 ? "text-[#d4973b]"
-                : "text-[#8c887b] hover:text-[#f3efe6]",
+                : "text-[#8492a6] hover:text-[#f1f5f9]",
             )}
           >
             {item.label}

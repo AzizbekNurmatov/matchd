@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 
 export async function updateSession(request: NextRequest) {
-  const response = NextResponse.next({ request });
+  let response = NextResponse.next({ request });
 
   if (!hasSupabaseConfig()) {
     return response;
@@ -18,8 +18,18 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          const changed = cookiesToSet.some(
+            ({ name, value }) => request.cookies.get(name)?.value !== value,
+          );
+          if (!changed) {
+            return;
+          }
+
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
+          });
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
         },
@@ -29,6 +39,8 @@ export async function updateSession(request: NextRequest) {
 
   // Touch the session so expired tokens refresh. Do not replace this
   // with getSession() — that reads the cookie without validating it.
+  // Only write cookies when the token actually changed, so a refresh
+  // does not send Set-Cookie on every request and retrigger the page.
   await supabase.auth.getUser();
 
   return response;

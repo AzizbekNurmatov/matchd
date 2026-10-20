@@ -7,9 +7,9 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-full flex-col">
-      <header className="border-b border-[#242426] bg-[#0f0f10] px-6 py-4">
+      <header className="border-b border-[#252b33] bg-[#181c22]/95 px-6 py-4 backdrop-blur-md">
         <Link href="/" className="inline-block">
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#8c887b]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d4973b]">
             EST. 2026 // ARCHIVE
           </p>
           <span className="mt-0.5 block font-serif text-2xl tracking-tight text-[#f3efe6]">
