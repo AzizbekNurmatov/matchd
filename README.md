@@ -6,13 +6,13 @@ The product is not a live-score ticker.
 
 ## What you can do
 
-- **Browse matches** at `/matches` — recent results, upcoming fixtures, or a combined list, filtered by league. A team search on the control bar filters the loaded list in the browser as you type. It does not call the API again.
+- **Browse matches** at `/matches` — recent results, upcoming fixtures, or a combined list, filtered by league. A team search on the control bar filters the loaded list in the browser as you type. It does not call the API again. A league change shows charcoal skeleton cards until the next catalog arrives.
 - **Open a match** at `/matches/[id]` — scoreline, community average, your rating, and the review thread.
 - **Rate** with half-star steps from 0.5 to 5.0. Hover fills the stars in warm gold; a click keeps the score on screen immediately, then saves. One rating per user per match, fight, or Grand Prix.
 - **Review** independently of rating (you can rate without writing, and the other way around).
-- **Browse fights** at `/fights` — UFC main cards, bout results, and fan ratings.
+- **Browse fights** at `/fights` — UFC main cards on Upcoming and Completed tabs, bout results, and fan ratings.
 - **Browse Formula 1** at `/f1` — the current season’s Grand Prix weekends, split into Upcoming and Completed. Finished races highlight the P1 driver and constructor. Weekends that have not been run say the race is scheduled.
-- **Search** at `/search` — opened from the header. The field is focused on load. Results update as you type and can include fighters, events, promotions, clubs, leagues, football fixtures, and Grand Prix cards.
+- **Search** at `/search` — opened from the header. The field is focused on load. Results update as you type and can include fighters, events, promotions, clubs, leagues, football fixtures, and Grand Prix cards. An empty query or a miss shows a dark empty panel instead of a blank list.
 - **Keep a profile** at `/users/[username]` — ratings archive, reviews, member stats, and a season matchday log (August–July).
 - **Edit your profile** — username, photo, nationality, and a favorite club. Photos go to the Supabase `avatars` bucket. Reviews show the avatar (or initials), flag, and club crest.
 
@@ -48,7 +48,7 @@ API-Sports (F1)    →  current-season calendar, cached
 4. **Read.** Catalog pages query Postgres, not the sports APIs, except for the F1 calendar fetch above. The matches catalog is wrapped in `unstable_cache` (`lib/sports-data/queries.ts`) with a 5-minute TTL and the `matches` tag. Tab switches on `/matches` are client-side; league changes prefetch the cached payload. Team search on that page is also client-side.
 5. **Search.** `/search` queries fighters, events, clubs, leagues, fixtures, and stored or cached Grands Prix in memory on the server. An empty category does not hide the others.
 6. **Refresh.** Cron (`GET /api/cron/sync` and `GET /api/cron/sync-ufc`, see `vercel.json`) refreshes football and UFC, then revalidates cached pages. `GET /api/cron/sync-f1` revalidates the F1 calendar. Each route accepts only `Authorization: Bearer <CRON_SECRET>`.
-7. **Accounts.** Supabase Auth. A trigger creates a `profiles` row on signup. Session cookies are refreshed in `proxy.ts`.
+7. **Accounts.** Supabase Auth. A trigger creates a `profiles` row on signup. Session cookies are refreshed in `proxy.ts` (`lib/supabase/update-session.ts`). The cookie jar is only rewritten when a token actually changes, so a homepage visit does not loop `GET /`.
 8. **Community data.** `match_ratings`, `reviews`, `ufc_fight_ratings`, and `f1_race_ratings` are per user per event. A `match_rating_stats` view supplies average and count for football match pages.
 
 Ratings never go back to the sports APIs.
@@ -59,7 +59,7 @@ Ratings never go back to the sports APIs.
 | --- | --- |
 | App | [Next.js](https://nextjs.org/) 16 (App Router) + React 19 |
 | Language | TypeScript |
-| Styling | Tailwind CSS 4, light editorial UI with a faint viewport texture |
+| Styling | Tailwind CSS 4. Light stone viewport with a faint texture. Charcoal sport cards (green edge for football, gold for UFC, red for F1). Masthead and footer in mineral slate `#181c22` / `#14171c` |
 | Auth + DB | [Supabase](https://supabase.com/) (Auth, Postgres, RLS) |
 | Football fixtures | Football-Data.org v4, plus API-Sports for MLS |
 | UFC | API-Sports MMA |
@@ -103,7 +103,7 @@ Run the SQL in `supabase/migrations/` against the project, in order:
 - `0006_f1.sql` — Formula 1 races and ratings
 - `0007_f1_circuit_image.sql` — adds `circuit_image` if that column is missing
 
-The hosted `f1_races` table the app writes is the column list above. If an older table is missing one of those columns, add it before saving Grands Prix. Star ratings need `f1_race_ratings`.
+The hosted `f1_races` table the app writes is `id`, `season`, `name`, `circuit`, `date`, `status`, `winner` (json), `sessions` (json), and `created_at`. Extra columns from older drafts are not sent on upsert. Star ratings need `f1_race_ratings`.
 
 Backfill football fixtures (rate-limited; `sync:all` waits between leagues):
 
@@ -123,7 +123,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## commit of the day
+## Scripts
 
 | Command | Purpose |
 | --- | --- |
@@ -137,12 +137,14 @@ Open [http://localhost:3000](http://localhost:3000).
 | Path | What it is |
 | --- | --- |
 | `/` | Discover / featured matches and the latest UFC card |
-| `/matches` | Catalog (recent / upcoming / all, by league) plus team search |
+| `/matches` | Catalog (recent / upcoming / all / international, by league) plus team search |
 | `/matches/[id]` | Match page: rating, reviews |
-| `/fights` | UFC cards |
+| `/fights` | UFC cards, Upcoming and Completed |
 | `/f1` | Current-season Grands Prix, Upcoming and Completed |
 | `/search` | Fighters, events, clubs, leagues, fixtures, and races |
 | `/users/[username]` | Public profile: stats, matchday log, ratings, reviews |
+| `/leaderboard` | Community board (placeholder) |
+| `/about`, `/privacy`, `/terms`, `/status` | Platform pages from the footer |
 | `/login`, `/signup` | Auth |
 | `/api/cron/sync` | Football fixture refresh (bearer token) |
 | `/api/cron/sync-ufc` | UFC refresh (bearer token) |
@@ -151,13 +153,15 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Repo layout
 
 ```
-app/                 routes, layouts, cron handlers
-components/          ratings, reviews, matches, UFC, F1, profile, layout
+app/                 routes, layouts, loading.tsx skeletons, cron handlers
+components/layout/   masthead, nav, footer
+components/ui/       empty states and MatchCardSkeleton
+components/          ratings, reviews, matches, UFC, F1, profile
 lib/sports-data/     football provider, sync, cached catalog queries
 lib/ufc/             MMA client, sync, and fight queries
 lib/f1/              Formula 1 client, calendar, and race queries
 lib/search.ts        combined search across football, UFC, and F1
-lib/supabase/        browser, server, and admin clients
+lib/supabase/        browser, server, admin clients, session refresh
 lib/actions/         profile updates (username, flair, avatar)
 supabase/migrations/ Postgres schema and the avatars bucket
 scripts/             CLI backfill
