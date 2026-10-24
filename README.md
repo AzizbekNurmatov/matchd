@@ -4,8 +4,7 @@ matchd is a fan log for football, UFC, and Formula 1. Browse a fixture, a fight 
 
 The product is not a live-score ticker.
 
-## What you can do
-## making a random commit
+## commit 
 
 - **Browse matches** at `/matches` — recent results, upcoming fixtures, or a combined list, filtered by league. A team search on the control bar filters the loaded list in the browser as you type. It does not call the API again. A league change shows charcoal skeleton cards until the next catalog arrives.
 - **Open a match** at `/matches/[id]` — scoreline, community average, your rating, and the review thread.
